@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Отдых и развлечения — Softo.top</title>
+  <meta name="description" content="Softo.top — раздел отдыха и вдохновения: играйте в онлайн-игры или читайте лучшие книги для души.">
+  <link rel="stylesheet" href="/menu/menu.css">
+  <script src="/menu/menu.js" defer></script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #fdeff9, #e6f0ff);
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    header {
+      text-align: center;
+      padding: 60px 20px 40px;
+      animation: fadeInDown 1s ease;
+    }
+
+    header h1 {
+      font-size: 2.4em;
+      margin-bottom: 10px;
+      color: #4b4b4b;
+    }
+
+    header p {
+      font-size: 1.2em;
+      color: #6b6b6b;
+    }
+
+    .cards {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      padding: 40px 20px 80px;
+    }
+
+    .card {
+      background-color: #ffffff;
+      width: 320px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+      text-align: center;
+      padding: 25px;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .card h2 {
+      color: #444;
+      margin-bottom: 15px;
+    }
+
+    .card p {
+      color: #666;
+      font-size: 1em;
+      margin-bottom: 20px;
+      line-height: 1.5em;
+    }
+
+    .card a {
+      display: inline-block;
+      padding: 10px 18px;
+      background-color: #307ac2;
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .card a:hover {
+      background-color: #25619b;
+      transform: scale(1.05);
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px;
+      color: #777;
+      font-size: 0.9em;
+      animation: fadeIn 2s ease;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Отдых и развлечения</h1>
+    <p>Расслабьтесь, вдохновитесь и насладитесь моментом — выберите, во что погрузиться сегодня 🎮📚</p>
+  </header>
+
+  <section class="cards">
+
+    <div class="card">
+      <h2>Играть в игры</h2>
+      <p>Онлайн-игры для отдыха, релакса и удовольствия. Быстрые мини-игры и креативные проекты прямо в браузере.</p>
+      <a href="/relaxation/games/index.html">Перейти</a>
+    </div>
+
+    <div class="card">
+      <h2>Читать книги</h2>
+      <p>Подборки вдохновляющих книг и статей о креативности, саморазвитии и жизни онлайн. Наслаждайтесь чтением.</p>
+      <a href="/relaxation/read-books/index.html">Перейти</a>
+    </div>
+
+    <div class="card">
+      <h2>Создайте свой Блог</h2>
+      <p>Делитесь своими страницами, историями и идеями. Вдохновляйте других — начните свой блог уже сегодня.</p>
+      <a href="/blog/index.html">Перейти</a>
+    </div>
+
+  </section>
+
+  <footer>
+    © 2025 Softo.top — ваш уютный уголок для вдохновения и отдыха
+  </footer>
+
+  <script>
+    // Анимация появления карточек при прокрутке
+    const cards = document.querySelectorAll('.card');
+
+    function showCards() {
+      const triggerBottom = window.innerHeight * 0.85;
+      cards.forEach(card => {
+        const cardTop = card.getBoundingClientRect().top;
+        if (cardTop < triggerBottom) {
+          card.classList.add('visible');
+        }
+      });
+    }
+
+    window.addEventListener('scroll', showCards);
+    window.addEventListener('load', showCards);
+  </script>
+
+</body>
+</html>

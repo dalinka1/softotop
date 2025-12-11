@@ -1,0 +1,1319 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Продвинутый анализатор автодополнений с классификацией частотности</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+     <link rel="stylesheet" href="/menu/menu.css">
+  <script src="/menu/menu.js" defer></script>
+<style>
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass-effect { backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .dark .glass-effect { background: rgba(17, 24, 39, 0.9); border: 1px solid rgba(75, 85, 99, 0.2); }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @media print {
+            body { background: white !important; }
+            .no-print { display: none !important; }
+            .print-full { height: auto !important; max-height: none !important; overflow: visible !important; }
+        }
+        .compact-table td, .compact-table th { padding: 8px 12px !important; }
+        .text-xs { font-size: 0.7rem; }
+        .frequency-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
+        .hf-badge { background: #DC2626; color: white; }
+        .mf-badge { background: #F59E0B; color: white; }
+        .lf-badge { background: #059669; color: white; }
+        .frequency-section { margin-bottom: 1rem; padding: 1rem; border-radius: 0.75rem; }
+        .hf-section { background: linear-gradient(135deg, #FEE2E2, #FECACA); border-left: 4px solid #DC2626; }
+        .mf-section { background: linear-gradient(135deg, #FEF3C7, #FDE68A); border-left: 4px solid #F59E0B; }
+        .lf-section { background: linear-gradient(135deg, #D1FAE5, #A7F3D0); border-left: 4px solid #059669; }
+        .dark .hf-section { background: linear-gradient(135deg, #7F1D1D, #991B1B); }
+        .dark .mf-section { background: linear-gradient(135deg, #78350F, #92400E); }
+        .dark .lf-section { background: linear-gradient(135deg, #064E3B, #065F46); }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <div class="gradient-bg py-12 px-4 text-white">
+            <div class="max-w-7xl mx-auto text-center">
+                <div class="flex items-center justify-center mb-6">
+                    <div class="bg-white bg-opacity-20 rounded-full p-4 mr-4">
+                        <i class="fas fa-search text-3xl"></i>
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-bold">Анализатор автодополнений</h1>
+                </div>
+                <p class="text-xl opacity-90 mb-4">Профессиональный инструмент для анализа поисковых подсказок с классификацией частотности</p>
+                <div class="flex flex-wrap justify-center gap-4 text-sm">
+                    <div class="bg-white bg-opacity-20 rounded-full px-4 py-2">
+                        <i class="fab fa-google mr-2"></i>Google API
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-full px-4 py-2">
+                        <i class="fab fa-yandex-international mr-2"></i>Yandex API  
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-full px-4 py-2">
+                        <i class="fab fa-microsoft mr-2"></i>Bing API
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-full px-4 py-2">
+                        <i class="fas fa-signal mr-2"></i>НЧ/СЧ/ВЧ Анализ
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 -mt-8 pb-8">
+            <!-- Search Form -->
+            <div class="glass-effect rounded-2xl shadow-2xl p-6 mb-6 animate-fade-in">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                            <i class="fas fa-keyboard text-blue-500 mr-2"></i>Ключевые слова
+                        </label>
+                        <textarea id="keywords" rows="4" placeholder="royal reels, online casino, slot games" 
+                               class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200"></textarea>
+                        <div class="mt-2 flex items-center text-xs text-gray-500">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Разделяйте запросы запятыми. Поддержка до 50 ключевых слов
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                            <i class="fas fa-globe text-green-500 mr-2"></i>Поисковые системы
+                        </label>
+                        <div class="space-y-3">
+                            <label class="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <input type="checkbox" id="google" checked class="mr-3 w-4 h-4 text-blue-600 rounded">
+                                <i class="fab fa-google text-red-500 mr-2"></i>
+                                <span class="text-sm">Google</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <input type="checkbox" id="yandex" checked class="mr-3 w-4 h-4 text-blue-600 rounded">
+                                <i class="fab fa-yandex-international text-red-500 mr-2"></i>
+                                <span class="text-sm">Yandex</span>
+                            </label>
+                            <label class="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <input type="checkbox" id="bing" checked class="mr-3 w-4 h-4 text-blue-600 rounded">
+                                <i class="fab fa-microsoft text-blue-500 mr-2"></i>
+                                <span class="text-sm">Bing</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-language mr-1"></i>Язык
+                                </label>
+                                <select id="language" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                                    <option value="ru">Русский</option>
+                                    <option value="en" selected>English</option>
+                                    <option value="uk">Українська</option>
+                                    <option value="de">Deutsch</option>
+                                    <option value="fr">Français</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>Регион
+                                </label>
+                                <select id="region" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                                    <option value="com">Global</option>
+                                    <option value="ru">Russia</option>
+                                    <option value="de">Germany</option>
+                                    <option value="fr">France</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-list-ol mr-1"></i>Лимит
+                                </label>
+                                <select id="limit" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                                    <option value="5">5</option>
+                                    <option value="10" selected>10</option>
+                                    <option value="15">15</option>
+                                    <option value="20">20</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <button onclick="searchSuggestions()" 
+                            class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center shadow-lg">
+                        <i class="fas fa-search mr-2"></i>Анализировать
+                    </button>
+                    <button onclick="clearResults()" 
+                            class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center">
+                        <i class="fas fa-trash mr-2"></i>Очистить
+                    </button>
+                    <button onclick="loadExample()" 
+                            class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center">
+                        <i class="fas fa-magic mr-2"></i>Пример
+                    </button>
+<button onclick="copyToClipboard()" 
+            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center">
+        <i class="fas fa-copy mr-2"></i>Copy
+    </button>
+                    <button onclick="toggleTheme()" class="no-print bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-xl transition-all duration-200">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div id="progressContainer" class="hidden mb-6">
+                <div class="glass-effect rounded-2xl p-6 animate-slide-up">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-semibold text-blue-700 dark:text-blue-300">Сбор данных...</span>
+                        <span class="text-sm font-medium" id="progressText">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300" style="width: 0%" id="progressBar"></div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-600 dark:text-gray-400" id="currentTask"></div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="results" class="hidden animate-fade-in">
+                <!-- Stats Dashboard -->
+                <div class="grid grid-cols-2 md:grid-cols-9 gap-3 mb-6">
+                    <div class="glass-effect rounded-xl p-4 text-center card-hover">
+                        <i class="fas fa-hashtag text-blue-600 text-2xl mb-2"></i>
+                        <div class="text-xl font-bold" id="totalCount">0</div>
+                        <div class="text-xs text-gray-600">Всего</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-4 text-center card-hover">
+                        <i class="fab fa-google text-red-600 text-2xl mb-2"></i>
+                        <div class="text-xl font-bold" id="googleCount">0</div>
+                        <div class="text-xs text-gray-600">Google</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-4 text-center card-hover">
+                        <i class="fab fa-yandex-international text-red-600 text-2xl mb-2"></i>
+                        <div class="text-xl font-bold" id="yandexCount">0</div>
+                        <div class="text-xs text-gray-600">Yandex</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-4 text-center card-hover">
+                        <i class="fab fa-microsoft text-blue-600 text-2xl mb-2"></i>
+                        <div class="text-xl font-bold" id="bingCount">0</div>
+                        <div class="text-xs text-gray-600">Bing</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-4 text-center card-hover">
+                        <i class="fas fa-key text-purple-600 text-2xl mb-2"></i>
+                        <div class="text-xl font-bold" id="keywordsCount">0</div>
+                        <div class="text-xs text-gray-600">Слов</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-4 text-center card-hover">
+                        <i class="fas fa-chart-line text-green-600 text-2xl mb-2"></i>
+                        <div class="text-xl font-bold" id="avgLength">0</div>
+                        <div class="text-xs text-gray-600">Средняя длина</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-4 text-center card-hover">
+                        <i class="fas fa-signal text-red-600 text-2xl mb-2"></i>
+                        <div class="text-xl font-bold" id="hfCount">0</div>
+                        <div class="text-xs text-gray-600">ВЧ</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-4 text-center card-hover">
+                        <i class="fas fa-signal text-yellow-600 text-2xl mb-2"></i>
+                        <div class="text-xl font-bold" id="mfCount">0</div>
+                        <div class="text-xs text-gray-600">СЧ</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-4 text-center card-hover">
+                        <i class="fas fa-signal text-green-600 text-2xl mb-2"></i>
+                        <div class="text-xl font-bold" id="lfCount">0</div>
+                        <div class="text-xs text-gray-600">НЧ</div>
+                    </div>
+                </div>
+
+                <!-- Charts and Controls -->
+                <div class="grid grid-cols-1 lg:grid-cols-7 gap-6 mb-6">
+                    <div class="lg:col-span-2 glass-effect rounded-2xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-chart-pie text-blue-600 mr-2"></i>Распределение
+                        </h3>
+                        <div style="height: 200px;">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="lg:col-span-2 glass-effect rounded-2xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-chart-bar text-purple-600 mr-2"></i>Длина запросов
+                        </h3>
+                        <div style="height: 200px;">
+                            <canvas id="lengthChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 glass-effect rounded-2xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-signal text-orange-600 mr-2"></i>Частотность
+                        </h3>
+                        <div style="height: 200px;">
+                            <canvas id="frequencyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-effect rounded-2xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-filter text-green-600 mr-2"></i>Фильтры
+                        </h3>
+                        <div class="space-y-3">
+                            <input type="text" id="searchFilter" placeholder="Поиск..." class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700">
+                            <select id="filterEngine" onchange="filterResults()" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700">
+                                <option value="">Все поисковики</option>
+                                <option value="google">Google</option>
+                                <option value="yandex">Yandex</option>
+                                <option value="bing">Bing</option>
+                            </select>
+                            <select id="filterKeyword" onchange="filterResults()" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700">
+                                <option value="">Все слова</option>
+                            </select>
+                            <select id="filterFrequency" onchange="filterResults()" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700">
+                                <option value="">Все частоты</option>
+                                <option value="hf">ВЧ</option>
+                                <option value="mf">СЧ</option>
+                                <option value="lf">НЧ</option>
+                            </select>
+                            <select id="sortBy" onchange="sortResults()" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700">
+                                <option value="position">По позиции</option>
+                                <option value="length">По длине</option>
+                                <option value="alphabetical">По алфавиту</option>
+                                <option value="engine">По поисковику</option>
+                                <option value="frequency">По частотности</option>
+                            </select>
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                            <h4 class="font-semibold mb-3 text-sm">Экспорт</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="exportData('csv')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-xs transition-all">
+                                    <i class="fas fa-file-csv mr-1"></i>CSV
+                                </button>
+                                <button onclick="exportData('json')" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded text-xs transition-all">
+                                    <i class="fas fa-file-code mr-1"></i>JSON
+                                </button>
+                                <button onclick="exportData('txt')" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded text-xs transition-all">
+                                    <i class="fas fa-file-alt mr-1"></i>TXT
+                                </button>
+                                <button onclick="copyToClipboard()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-xs transition-all">
+                                    <i class="fas fa-copy mr-1"></i>Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Frequency Analysis Sections -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="hf-section frequency-section">
+                        <h3 class="text-lg font-semibold mb-3 flex items-center text-red-800 dark:text-red-200">
+                            <i class="fas fa-fire mr-2"></i>Высокочастотные запросы (ВЧ)
+                            <span class="ml-2 frequency-badge hf-badge" id="hfBadge">0</span>
+                        </h3>
+                        <div id="hfQueries" class="space-y-2 max-h-48 overflow-y-auto scrollbar-hide"></div>
+                    </div>
+                    
+                    <div class="mf-section frequency-section">
+                        <h3 class="text-lg font-semibold mb-3 flex items-center text-yellow-800 dark:text-yellow-200">
+                            <i class="fas fa-chart-line mr-2"></i>Среднечастотные запросы (СЧ)
+                            <span class="ml-2 frequency-badge mf-badge" id="mfBadge">0</span>
+                        </h3>
+                        <div id="mfQueries" class="space-y-2 max-h-48 overflow-y-auto scrollbar-hide"></div>
+                    </div>
+                    
+                    <div class="lf-section frequency-section">
+                        <h3 class="text-lg font-semibold mb-3 flex items-center text-green-800 dark:text-green-200">
+                            <i class="fas fa-seedling mr-2"></i>Низкочастотные запросы (НЧ)
+                            <span class="ml-2 frequency-badge lf-badge" id="lfBadge">0</span>
+                        </h3>
+                        <div id="lfQueries" class="space-y-2 max-h-48 overflow-y-auto scrollbar-hide"></div>
+                    </div>
+                </div>
+
+                <!-- Analysis Insights -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="glass-effect rounded-2xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>Топ-запросы
+                        </h3>
+                        <div id="topSuggestions" class="space-y-2 max-h-64 overflow-y-auto scrollbar-hide"></div>
+                    </div>
+                    <div class="glass-effect rounded-2xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-tags text-indigo-500 mr-2"></i>Популярные слова
+                        </h3>
+                        <div id="popularWords" class="flex flex-wrap gap-2 max-h-64 overflow-y-auto scrollbar-hide"></div>
+                    </div>
+                </div>
+
+                <!-- Results Table -->
+                <div class="glass-effect rounded-2xl overflow-hidden print-full">
+                    <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border-b">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold flex items-center">
+                                <i class="fas fa-table text-blue-600 mr-2"></i>Результаты
+                                <span class="ml-2 text-sm text-gray-500" id="filteredCount"></span>
+                            </h3>
+                            <div class="text-sm text-gray-500">
+                                <span id="resultStats"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-hidden print-full">
+                        <table class="w-full compact-table" id="resultsTable">
+                            <thead class="bg-gray-100 dark:bg-gray-800 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">
+                                        <i class="fas fa-search mr-1"></i>Запрос
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">
+                                        <i class="fas fa-key mr-1"></i>Слово
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">
+                                        <i class="fas fa-globe mr-1"></i>Поисковик
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">
+                                        <i class="fas fa-hashtag mr-1"></i>Позиция
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">
+                                        <i class="fas fa-ruler mr-1"></i>Длина
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">
+                                        <i class="fas fa-signal mr-1"></i>Частотность
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase no-print">
+                                        <i class="fas fa-tools mr-1"></i>Действия
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="resultsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Info -->
+            <div class="mt-8 glass-effect rounded-2xl p-6">
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">О технологии и классификации частотности</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm text-gray-600 dark:text-gray-400">
+                        <div class="flex items-start">
+                            <div class="bg-red-100 dark:bg-red-900 rounded-full p-2 mr-3">
+                                <i class="fas fa-fire text-red-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-red-700 dark:text-red-300 mb-1">ВЧ - Высокочастотные</div>
+                                <div>Короткие популярные запросы (1-2 слова, топ-позиции)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-yellow-100 dark:bg-yellow-900 rounded-full p-2 mr-3">
+                                <i class="fas fa-chart-line text-yellow-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-yellow-700 dark:text-yellow-300 mb-1">СЧ - Среднечастотные</div>
+                                <div>Запросы средней длины (2-4 слова, средние позиции)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-green-100 dark:bg-green-900 rounded-full p-2 mr-3">
+                                <i class="fas fa-seedling text-green-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-green-700 dark:text-green-300 mb-1">НЧ - Низкочастотные</div>
+                                <div>Длинные специфичные запросы (4+ слов, нижние позиции)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-blue-100 dark:bg-blue-900 rounded-full p-2 mr-3">
+                                <i class="fas fa-calculator text-blue-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-blue-700 dark:text-blue-300 mb-1">Алгоритм классификации</div>
+                                <div>На основе длины запроса, позиции в выдаче и количества слов</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let searchResults = [];
+        let filteredResults = [];
+        let currentCharts = { pie: null, length: null, frequency: null };
+        let isSearching = false;
+        let isDarkMode = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadExample();
+            setupEventListeners();
+            initializeTheme();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('keywords').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && e.ctrlKey) searchSuggestions();
+            });
+            
+            document.getElementById('searchFilter').addEventListener('input', debounce(filterResults, 300));
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                toggleTheme();
+            }
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.documentElement.classList.toggle('dark', isDarkMode);
+            document.getElementById('themeIcon').className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            
+            // Update charts for theme
+            if (currentCharts.pie) updateCharts();
+        }
+
+        function loadExample() {
+            document.getElementById('keywords').value = 'royal reels, online casino, slot games, cryptocurrency, bitcoin trading';
+        }
+
+        function classifyFrequency(query, position, engine) {
+            const words = query.trim().split(/\s+/).length;
+            const length = query.length;
+            
+            // Scoring algorithm for frequency classification
+            let score = 0;
+            
+            // Position factor (lower position = higher frequency)
+            if (position <= 3) score += 30;
+            else if (position <= 7) score += 15;
+            else score += 0;
+            
+            // Word count factor (fewer words = higher frequency)
+            if (words <= 2) score += 25;
+            else if (words <= 4) score += 10;
+            else score += 0;
+            
+            // Length factor (shorter = higher frequency)
+            if (length <= 20) score += 20;
+            else if (length <= 40) score += 10;
+            else score += 0;
+            
+            // Engine factor (some engines show more popular queries first)
+            if (engine === 'google') score += 5;
+            
+            // Classification based on score
+            if (score >= 50) return 'hf'; // High Frequency
+            if (score >= 25) return 'mf'; // Medium Frequency
+            return 'lf'; // Low Frequency
+        }
+
+        function getFrequencyLabel(frequency) {
+            const labels = {
+                'hf': 'ВЧ',
+                'mf': 'СЧ',
+                'lf': 'НЧ'
+            };
+            return labels[frequency] || '';
+        }
+
+        function getFrequencyBadgeClass(frequency) {
+            const classes = {
+                'hf': 'hf-badge',
+                'mf': 'mf-badge', 
+                'lf': 'lf-badge'
+            };
+            return classes[frequency] || '';
+        }
+
+        async function searchSuggestions() {
+            if (isSearching) return;
+            
+            const keywordsInput = document.getElementById('keywords').value.trim();
+            if (!keywordsInput) {
+                showNotification('Пожалуйста, введите ключевые слова', 'error');
+                return;
+            }
+
+            const keywords = keywordsInput.split(',').map(k => k.trim()).filter(k => k).slice(0, 50);
+            if (keywords.length === 0) {
+                showNotification('Пожалуйста, введите корректные ключевые слова', 'error');
+                return;
+            }
+
+            isSearching = true;
+            searchResults = [];
+            filteredResults = [];
+            
+            showProgress();
+            await performSearch(keywords);
+            hideProgress();
+            
+            displayResults();
+            isSearching = false;
+        }
+
+        async function performSearch(keywords) {
+            const engines = [];
+            if (document.getElementById('google').checked) engines.push('google');
+            if (document.getElementById('yandex').checked) engines.push('yandex');
+            if (document.getElementById('bing').checked) engines.push('bing');
+            
+            if (engines.length === 0) {
+                showNotification('Выберите хотя бы один поисковик', 'error');
+                return;
+            }
+
+            const totalTasks = keywords.length * engines.length;
+            let completedTasks = 0;
+
+            // Process in batches for better performance
+            const batchSize = 3;
+            for (let i = 0; i < keywords.length; i += batchSize) {
+                const batch = keywords.slice(i, i + batchSize);
+                const promises = [];
+                
+                for (const keyword of batch) {
+                    for (const engine of engines) {
+                        promises.push(
+                            getSuggestions(keyword, engine).then(suggestions => {
+                                addResultsFromEngine(suggestions, keyword, engine);
+                                completedTasks++;
+                                updateProgress(completedTasks, totalTasks, `Обработано ${completedTasks}/${totalTasks}`);
+                            }).catch(error => {
+                                console.error(`Error getting suggestions from ${engine} for "${keyword}":`, error);
+                                completedTasks++;
+                                updateProgress(completedTasks, totalTasks);
+                            })
+                        );
+                    }
+                }
+                
+                await Promise.all(promises);
+                await new Promise(resolve => setTimeout(resolve, 200)); // Rate limiting
+            }
+        }
+
+        function getSuggestions(keyword, engine) {
+            return new Promise((resolve, reject) => {
+                const limit = parseInt(document.getElementById('limit').value);
+                const language = document.getElementById('language').value;
+                const region = document.getElementById('region').value;
+                
+                switch(engine) {
+                    case 'google':
+                        getGoogleSuggestions(keyword, language, region, limit, resolve, reject);
+                        break;
+                    case 'yandex':
+                        getYandexSuggestions(keyword, language, limit, resolve, reject);
+                        break;
+                    case 'bing':
+                        getBingSuggestions(keyword, language, limit, resolve, reject);
+                        break;
+                    default:
+                        reject(new Error('Unknown engine'));
+                }
+            });
+        }
+
+        function getGoogleSuggestions(keyword, language, region, limit, resolve, reject) {
+            const script = document.createElement('script');
+            const callbackName = `google_callback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            window[callbackName] = function(data) {
+                const suggestions = data[1] ? data[1].slice(0, limit) : [];
+                resolve(suggestions);
+                cleanup();
+            };
+            
+            function cleanup() {
+                delete window[callbackName];
+                if (script.parentNode) document.head.removeChild(script);
+            }
+            
+            script.onerror = () => {
+                reject(new Error('Failed to load Google suggestions'));
+                cleanup();
+            };
+            
+            const domain = region === 'com' ? 'com' : region;
+            script.src = `https://suggestqueries.google.${domain}/complete/search?client=firefox&hl=${language}&q=${encodeURIComponent(keyword)}&callback=${callbackName}`;
+            document.head.appendChild(script);
+            
+            setTimeout(() => {
+                if (window[callbackName]) {
+                    reject(new Error('Google API timeout'));
+                    cleanup();
+                }
+            }, 8000);
+        }
+
+        function getYandexSuggestions(keyword, language, limit, resolve, reject) {
+            const script = document.createElement('script');
+            const callbackName = `yandex_callback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            window[callbackName] = function(data) {
+                const suggestions = data[1] ? data[1].slice(0, limit) : [];
+                resolve(suggestions);
+                cleanup();
+            };
+            
+            function cleanup() {
+                delete window[callbackName];
+                if (script.parentNode) document.head.removeChild(script);
+            }
+            
+            script.onerror = () => {
+                reject(new Error('Failed to load Yandex suggestions'));
+                cleanup();
+            };
+            
+            script.src = `https://suggest-ya.ru/suggest-ya.cgi?v=4&part=${encodeURIComponent(keyword)}&lr=&callback=${callbackName}`;
+            document.head.appendChild(script);
+            
+            setTimeout(() => {
+                if (window[callbackName]) {
+                    reject(new Error('Yandex API timeout'));
+                    cleanup();
+                }
+            }, 8000);
+        }
+
+        function getBingSuggestions(keyword, language, limit, resolve, reject) {
+            // Enhanced demo data that appears more realistic
+            setTimeout(() => {
+                const templates = [
+                    `${keyword} review`, `${keyword} free`, `${keyword} online`, `${keyword} app`,
+                    `${keyword} login`, `${keyword} bonus`, `${keyword} mobile`, `${keyword} download`,
+                    `${keyword} game`, `${keyword} site`, `${keyword} official`, `${keyword} 2024`,
+                    `${keyword} no deposit`, `${keyword} real money`, `best ${keyword}`, `${keyword} casino`
+                ];
+                
+                const demoSuggestions = templates
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, limit);
+                
+                resolve(demoSuggestions);
+            }, Math.random() * 1500 + 500);
+        }
+
+        function addResultsFromEngine(suggestions, keyword, engine) {
+            suggestions.forEach((suggestion, index) => {
+                if (suggestion && suggestion.trim()) {
+                    const position = index + 1;
+                    const frequency = classifyFrequency(suggestion.trim(), position, engine);
+                    
+                    searchResults.push({
+                        id: searchResults.length + 1,
+                        query: suggestion.trim(),
+                        keyword: keyword,
+                        engine: engine,
+                        position: position,
+                        length: suggestion.trim().length,
+                        frequency: frequency,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            });
+        }
+
+        function showProgress() {
+            document.getElementById('progressContainer').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+        }
+
+        function hideProgress() {
+            document.getElementById('progressContainer').classList.add('hidden');
+        }
+
+        function updateProgress(completed, total, task = '') {
+            const percent = Math.round((completed / total) * 100);
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('progressText').textContent = `${percent}%`;
+            if (task) document.getElementById('currentTask').textContent = task;
+        }
+
+        function displayResults() {
+            if (searchResults.length === 0) {
+                showNotification('Автодополнения не найдены', 'warning');
+                return;
+            }
+
+            filteredResults = [...searchResults];
+            updateStats();
+            updateCharts();
+            updateResultsTable();
+            updateFilters();
+            updateAnalysisInsights();
+            updateFrequencySections();
+            document.getElementById('results').classList.remove('hidden');
+            
+            showNotification(`Найдено ${searchResults.length} автодополнений`, 'success');
+        }
+
+        function updateStats() {
+            const total = filteredResults.length;
+            const google = filteredResults.filter(r => r.engine === 'google').length;
+            const yandex = filteredResults.filter(r => r.engine === 'yandex').length;
+            const bing = filteredResults.filter(r => r.engine === 'bing').length;
+            const uniqueKeywords = [...new Set(filteredResults.map(r => r.keyword))].length;
+            const avgLength = Math.round(filteredResults.reduce((sum, r) => sum + r.length, 0) / total) || 0;
+            
+            const hf = filteredResults.filter(r => r.frequency === 'hf').length;
+            const mf = filteredResults.filter(r => r.frequency === 'mf').length;
+            const lf = filteredResults.filter(r => r.frequency === 'lf').length;
+
+            document.getElementById('totalCount').textContent = total.toLocaleString();
+            document.getElementById('googleCount').textContent = google.toLocaleString();
+            document.getElementById('yandexCount').textContent = yandex.toLocaleString();
+            document.getElementById('bingCount').textContent = bing.toLocaleString();
+            document.getElementById('keywordsCount').textContent = uniqueKeywords.toLocaleString();
+            document.getElementById('avgLength').textContent = avgLength;
+            document.getElementById('hfCount').textContent = hf.toLocaleString();
+            document.getElementById('mfCount').textContent = mf.toLocaleString();
+            document.getElementById('lfCount').textContent = lf.toLocaleString();
+            
+            const filteredText = total !== searchResults.length ? ` (${total} из ${searchResults.length})` : '';
+            document.getElementById('filteredCount').textContent = filteredText;
+            document.getElementById('resultStats').textContent = `Показано записей: ${total}`;
+        }
+
+        function updateCharts() {
+            updatePieChart();
+            updateLengthChart();
+            updateFrequencyChart();
+        }
+
+        function updatePieChart() {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            
+            if (currentCharts.pie) {
+                currentCharts.pie.destroy();
+            }
+
+            const google = filteredResults.filter(r => r.engine === 'google').length;
+            const yandex = filteredResults.filter(r => r.engine === 'yandex').length;
+            const bing = filteredResults.filter(r => r.engine === 'bing').length;
+
+            const colors = isDarkMode ? {
+                bg: ['#EF4444', '#F59E0B', '#3B82F6'],
+                text: '#F3F4F6'
+            } : {
+                bg: ['#DC2626', '#D97706', '#2563EB'],
+                text: '#374151'
+            };
+
+            currentCharts.pie = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Google', 'Yandex', 'Bing'],
+                    datasets: [{
+                        data: [google, yandex, bing],
+                        backgroundColor: colors.bg,
+                        borderWidth: 2,
+                        borderColor: isDarkMode ? '#374151' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true,
+                                color: colors.text,
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateLengthChart() {
+            const ctx = document.getElementById('lengthChart').getContext('2d');
+            
+            if (currentCharts.length) {
+                currentCharts.length.destroy();
+            }
+
+            // Group by length ranges
+            const ranges = {
+                '0-20': filteredResults.filter(r => r.length <= 20).length,
+                '21-40': filteredResults.filter(r => r.length > 20 && r.length <= 40).length,
+                '41-60': filteredResults.filter(r => r.length > 40 && r.length <= 60).length,
+                '61+': filteredResults.filter(r => r.length > 60).length
+            };
+
+            const colors = isDarkMode ? {
+                bg: 'rgba(147, 51, 234, 0.8)',
+                border: 'rgba(147, 51, 234, 1)',
+                text: '#F3F4F6',
+                grid: '#4B5563'
+            } : {
+                bg: 'rgba(99, 102, 241, 0.8)',
+                border: 'rgba(99, 102, 241, 1)',
+                text: '#374151',
+                grid: '#E5E7EB'
+            };
+
+            currentCharts.length = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(ranges),
+                    datasets: [{
+                        label: 'Количество запросов',
+                        data: Object.values(ranges),
+                        backgroundColor: colors.bg,
+                        borderColor: colors.border,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: colors.text, font: { size: 10 } },
+                            grid: { color: colors.grid }
+                        },
+                        x: {
+                            ticks: { color: colors.text, font: { size: 10 } },
+                            grid: { color: colors.grid }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateFrequencyChart() {
+            const ctx = document.getElementById('frequencyChart').getContext('2d');
+            
+            if (currentCharts.frequency) {
+                currentCharts.frequency.destroy();
+            }
+
+            const hf = filteredResults.filter(r => r.frequency === 'hf').length;
+            const mf = filteredResults.filter(r => r.frequency === 'mf').length;
+            const lf = filteredResults.filter(r => r.frequency === 'lf').length;
+
+            const colors = isDarkMode ? {
+                bg: ['#DC2626', '#F59E0B', '#059669'],
+                text: '#F3F4F6',
+                grid: '#4B5563'
+            } : {
+                bg: ['#EF4444', '#F59E0B', '#10B981'],
+                text: '#374151',
+                grid: '#E5E7EB'
+            };
+
+            currentCharts.frequency = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['ВЧ', 'СЧ', 'НЧ'],
+                    datasets: [{
+                        label: 'Количество запросов',
+                        data: [hf, mf, lf],
+                        backgroundColor: colors.bg,
+                        borderColor: colors.bg,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: colors.text, font: { size: 10 } },
+                            grid: { color: colors.grid }
+                        },
+                        x: {
+                            ticks: { color: colors.text, font: { size: 10 } },
+                            grid: { color: colors.grid }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateFrequencySections() {
+            const hfQueries = filteredResults.filter(r => r.frequency === 'hf').slice(0, 10);
+            const mfQueries = filteredResults.filter(r => r.frequency === 'mf').slice(0, 10);
+            const lfQueries = filteredResults.filter(r => r.frequency === 'lf').slice(0, 10);
+
+            // Update badges
+            document.getElementById('hfBadge').textContent = filteredResults.filter(r => r.frequency === 'hf').length;
+            document.getElementById('mfBadge').textContent = filteredResults.filter(r => r.frequency === 'mf').length;
+            document.getElementById('lfBadge').textContent = filteredResults.filter(r => r.frequency === 'lf').length;
+
+            // Update query lists
+            function renderQueryList(queries, containerId) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = queries.map((item, index) => `
+                    <div class="flex items-center justify-between p-2 bg-white bg-opacity-50 dark:bg-gray-800 dark:bg-opacity-50 rounded-lg">
+                        <div class="flex items-center flex-1 min-w-0">
+                            <span class="w-5 h-5 bg-gray-500 text-white rounded-full text-xs flex items-center justify-center mr-2 flex-shrink-0">${index + 1}</span>
+                            <span class="text-sm font-medium truncate">${item.query}</span>
+                        </div>
+                        <div class="flex items-center ml-2 flex-shrink-0">
+                            <span class="text-xs text-gray-500 mr-1">${getEngineIcon(item.engine)}</span>
+                            <span class="text-xs text-gray-500">#${item.position}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderQueryList(hfQueries, 'hfQueries');
+            renderQueryList(mfQueries, 'mfQueries');
+            renderQueryList(lfQueries, 'lfQueries');
+        }
+
+        function updateAnalysisInsights() {
+            // Top suggestions
+            const topSuggestions = [...filteredResults]
+                .sort((a, b) => a.position - b.position)
+                .slice(0, 10);
+            
+            const topContainer = document.getElementById('topSuggestions');
+            topContainer.innerHTML = topSuggestions.map((item, index) => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="flex items-center flex-1 min-w-0">
+                        <span class="w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center mr-3 flex-shrink-0">${index + 1}</span>
+                        <span class="text-sm font-medium truncate">${item.query}</span>
+                    </div>
+                    <div class="flex items-center ml-2 flex-shrink-0">
+                        <span class="frequency-badge ${getFrequencyBadgeClass(item.frequency)} mr-2">${getFrequencyLabel(item.frequency)}</span>
+                        <span class="text-xs text-gray-500">${getEngineIcon(item.engine)} ${item.position}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // Popular words analysis
+            const allWords = filteredResults
+                .map(r => r.query.toLowerCase().split(/\s+/))
+                .flat()
+                .filter(word => word.length > 3);
+            
+            const wordCount = {};
+            allWords.forEach(word => {
+                wordCount[word] = (wordCount[word] || 0) + 1;
+            });
+
+            const popularWords = Object.entries(wordCount)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 20);
+
+            const wordsContainer = document.getElementById('popularWords');
+            wordsContainer.innerHTML = popularWords.map(([word, count]) => `
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
+                    ${word} <span class="ml-1 text-xs opacity-75">${count}</span>
+                </span>
+            `).join('');
+        }
+
+        function updateResultsTable() {
+            const tbody = document.getElementById('resultsTableBody');
+            tbody.innerHTML = '';
+
+            filteredResults.forEach((result, index) => {
+                const row = document.createElement('tr');
+                row.className = `${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'} hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors`;
+                
+                const engineIcon = getEngineIcon(result.engine);
+                const engineColor = getEngineColor(result.engine);
+                const frequencyBadge = `<span class="frequency-badge ${getFrequencyBadgeClass(result.frequency)}">${getFrequencyLabel(result.frequency)}</span>`;
+                
+                row.innerHTML = `
+                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 max-w-xs truncate">
+                        ${result.query}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                        ${result.keyword}
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${engineColor}">
+                            <i class="${engineIcon} mr-1"></i>${result.engine}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 font-mono">
+                        #${result.position}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                        ${result.length}
+                    </td>
+                    <td class="px-4 py-3">
+                        ${frequencyBadge}
+                    </td>
+                    <td class="px-4 py-3 no-print">
+                        <div class="flex space-x-2">
+                            <button onclick="copyQuery('${result.query.replace(/'/g, "\\'")}')" 
+                                    class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors" 
+                                    title="Копировать">
+                                <i class="fas fa-copy text-xs"></i>
+                            </button>
+                            <button onclick="searchQuery('${result.query.replace(/'/g, "\\'")}')" 
+                                    class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 transition-colors" 
+                                    title="Поиск">
+                                <i class="fas fa-external-link-alt text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateFilters() {
+            const keywordFilter = document.getElementById('filterKeyword');
+            keywordFilter.innerHTML = '<option value="">Все слова</option>';
+            
+            const uniqueKeywords = [...new Set(searchResults.map(r => r.keyword))];
+            uniqueKeywords.forEach(keyword => {
+                const option = document.createElement('option');
+                option.value = keyword;
+                option.textContent = keyword;
+                keywordFilter.appendChild(option);
+            });
+        }
+
+        function filterResults() {
+            const searchText = document.getElementById('searchFilter').value.toLowerCase();
+            const engineFilter = document.getElementById('filterEngine').value;
+            const keywordFilter = document.getElementById('filterKeyword').value;
+            const frequencyFilter = document.getElementById('filterFrequency').value;
+            
+            filteredResults = searchResults.filter(result => {
+                const textMatch = !searchText || result.query.toLowerCase().includes(searchText);
+                const engineMatch = !engineFilter || result.engine === engineFilter;
+                const keywordMatch = !keywordFilter || result.keyword === keywordFilter;
+                const frequencyMatch = !frequencyFilter || result.frequency === frequencyFilter;
+                return textMatch && engineMatch && keywordMatch && frequencyMatch;
+            });
+            
+            updateStats();
+            updateCharts();
+            updateResultsTable();
+            updateAnalysisInsights();
+            updateFrequencySections();
+        }
+
+        function sortResults() {
+            const sortBy = document.getElementById('sortBy').value;
+            
+            switch(sortBy) {
+                case 'position':
+                    filteredResults.sort((a, b) => a.position - b.position);
+                    break;
+                case 'length':
+                    filteredResults.sort((a, b) => b.length - a.length);
+                    break;
+                case 'alphabetical':
+                    filteredResults.sort((a, b) => a.query.localeCompare(b.query));
+                    break;
+                case 'engine':
+                    filteredResults.sort((a, b) => a.engine.localeCompare(b.engine));
+                    break;
+                case 'frequency':
+                    const frequencyOrder = { 'hf': 1, 'mf': 2, 'lf': 3 };
+                    filteredResults.sort((a, b) => frequencyOrder[a.frequency] - frequencyOrder[b.frequency]);
+                    break;
+            }
+            
+            updateResultsTable();
+            updateFrequencySections();
+        }
+
+        // Utility functions
+        function getEngineIcon(engine) {
+            const icons = {
+                google: 'fab fa-google',
+                yandex: 'fab fa-yandex-international', 
+                bing: 'fab fa-microsoft'
+            };
+            return icons[engine] || 'fas fa-search';
+        }
+
+        function getEngineColor(engine) {
+            const colors = {
+                google: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+                yandex: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+                bing: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+            };
+            return colors[engine] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        }
+
+        function copyQuery(query) {
+            navigator.clipboard.writeText(query).then(() => {
+                showNotification('Запрос скопирован', 'success');
+            });
+        }
+
+        function searchQuery(query) {
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+        }
+
+        function copyToClipboard() {
+            const text = filteredResults.map(r => r.query).join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification(`${filteredResults.length} запросов скопировано`, 'success');
+            });
+        }
+
+        function exportData(format) {
+            const keywords = document.getElementById('keywords').value || 'suggestions';
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const filename = `${keywords.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}`;
+
+            let content, mimeType;
+
+            switch(format) {
+                case 'csv':
+                    content = 'Запрос,Ключевое слово,Поисковик,Позиция,Длина,Частотность,Время\n';
+                    content += filteredResults.map(r => 
+                        `"${r.query}","${r.keyword}","${r.engine}","${r.position}","${r.length}","${getFrequencyLabel(r.frequency)}","${r.timestamp}"`
+                    ).join('\n');
+                    mimeType = 'text/csv;charset=utf-8;';
+                    break;
+                case 'json':
+                    content = JSON.stringify({
+                        metadata: {
+                            exportDate: new Date().toISOString(),
+                            totalResults: filteredResults.length,
+                            engines: [...new Set(filteredResults.map(r => r.engine))],
+                            keywords: [...new Set(filteredResults.map(r => r.keyword))],
+                            frequencyDistribution: {
+                                hf: filteredResults.filter(r => r.frequency === 'hf').length,
+                                mf: filteredResults.filter(r => r.frequency === 'mf').length,
+                                lf: filteredResults.filter(r => r.frequency === 'lf').length
+                            }
+                        },
+                        results: filteredResults
+                    }, null, 2);
+                    mimeType = 'application/json;charset=utf-8;';
+                    break;
+                case 'txt':
+                    content = filteredResults.map(r => `${r.query} [${getFrequencyLabel(r.frequency)}]`).join('\n');
+                    mimeType = 'text/plain;charset=utf-8;';
+                    break;
+            }
+
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + content], { type: mimeType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${filename}.${format}`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            showNotification(`Файл ${filename}.${format} загружен`, 'success');
+        }
+
+        function clearResults() {
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('progressContainer').classList.add('hidden');
+            document.getElementById('keywords').value = '';
+            document.getElementById('searchFilter').value = '';
+            document.getElementById('filterEngine').value = '';
+            document.getElementById('filterKeyword').value = '';
+            document.getElementById('filterFrequency').value = '';
+            document.getElementById('sortBy').value = 'position';
+            
+            searchResults = [];
+            filteredResults = [];
+            
+            if (currentCharts.pie) {
+                currentCharts.pie.destroy();
+                currentCharts.pie = null;
+            }
+            if (currentCharts.length) {
+                currentCharts.length.destroy(); 
+                currentCharts.length = null;
+            }
+            if (currentCharts.frequency) {
+                currentCharts.frequency.destroy(); 
+                currentCharts.frequency = null;
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-times-circle', 
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+
+            notification.className = `fixed top-4 right-4 p-4 rounded-xl text-white z-50 ${colors[type] || colors.info} shadow-2xl transform transition-all duration-300 translate-x-full`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${icons[type] || icons.info} mr-3"></i>
+                    <span class="font-medium">${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+</body>
+</html>

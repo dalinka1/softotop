@@ -1,0 +1,387 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шахматы Мастер - Полнофункциональная шахматная игра</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="/menu/menu.css">
+  <script src="/menu/menu.js" defer></script>
+</head>
+<body>
+    <!-- Главное меню -->
+    <div class="main-menu" id="mainMenu">
+        <div class="menu-container">
+            <h1 class="game-title">
+                <i class="fas fa-chess-king"></i>
+                Шахматы Мастер
+            </h1>
+            
+            <div class="menu-buttons">
+                <button class="menu-btn primary" onclick="startNewGame()">
+                    <i class="fas fa-play"></i>
+                    Новая игра
+                </button>
+                
+                <button class="menu-btn" onclick="continueGame()">
+                    <i class="fas fa-undo"></i>
+                    Продолжить игру
+                </button>
+                
+                <button class="menu-btn" onclick="showTrainingMode()">
+                    <i class="fas fa-graduation-cap"></i>
+                    Обучение
+                </button>
+                
+                <button class="menu-btn" onclick="showStatistics()">
+                    <i class="fas fa-chart-bar"></i>
+                    Статистика
+                </button>
+                
+                <button class="menu-btn" onclick="showSettings()">
+                    <i class="fas fa-cog"></i>
+                    Настройки
+                </button>
+            </div>
+            
+            <div class="difficulty-selector" id="difficultySelector" style="display: none;">
+                <h3>Выберите уровень сложности:</h3>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn" data-level="1">
+                        <i class="fas fa-user"></i>
+                        Новичок
+                    </button>
+                    <button class="difficulty-btn" data-level="2">
+                        <i class="fas fa-user-graduate"></i>
+                        Любитель
+                    </button>
+                    <button class="difficulty-btn" data-level="3">
+                        <i class="fas fa-chess-knight"></i>
+                        Опытный
+                    </button>
+                    <button class="difficulty-btn" data-level="4">
+                        <i class="fas fa-crown"></i>
+                        Мастер
+                    </button>
+                </div>
+                <button class="menu-btn secondary" onclick="hideDifficultySelector()">
+                    <i class="fas fa-arrow-left"></i>
+                    Назад
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Игровой экран -->
+    <div class="game-screen" id="gameScreen" style="display: none;">
+        <!-- Верхняя панель -->
+        <div class="top-panel">
+            <button class="control-btn" onclick="showMainMenu()">
+                <i class="fas fa-home"></i>
+                Меню
+            </button>
+            
+            <div class="game-info">
+                <div class="current-player" id="currentPlayer">
+                    <i class="fas fa-chess-pawn"></i>
+                    Ход белых
+                </div>
+                <div class="game-timer" id="gameTimer">
+                    <i class="fas fa-clock"></i>
+                    <span id="timerDisplay">00:00</span>
+                </div>
+            </div>
+            
+            <div class="game-controls">
+                <button class="control-btn" onclick="undoMove()">
+                    <i class="fas fa-undo"></i>
+                    Отменить
+                </button>
+                <button class="control-btn" onclick="showHint()">
+                    <i class="fas fa-lightbulb"></i>
+                    Подсказка
+                </button>
+                <button class="control-btn" onclick="resignGame()">
+                    <i class="fas fa-flag"></i>
+                    Сдаться
+                </button>
+            </div>
+        </div>
+
+        <!-- Основная игровая область -->
+        <div class="game-area">
+            <!-- Информация о противнике -->
+            <div class="player-info opponent">
+                <div class="player-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="player-details">
+                    <h3 id="opponentName">ИИ Противник</h3>
+                    <div class="captured-pieces" id="opponentCaptured"></div>
+                    <div class="player-score" id="opponentScore">Очки: 0</div>
+                </div>
+            </div>
+
+            <!-- Шахматная доска -->
+            <div class="chess-board-container">
+                <div class="board-coordinates top">
+                    <span>a</span><span>b</span><span>c</span><span>d</span>
+                    <span>e</span><span>f</span><span>g</span><span>h</span>
+                </div>
+                
+                <div class="board-with-coords">
+                    <div class="board-coordinates left">
+                        <span>8</span><span>7</span><span>6</span><span>5</span>
+                        <span>4</span><span>3</span><span>2</span><span>1</span>
+                    </div>
+                    
+                    <div class="chess-board" id="chessBoard">
+                        <!-- Клетки доски будут созданы динамически -->
+                    </div>
+                    
+                    <div class="board-coordinates right">
+                        <span>8</span><span>7</span><span>6</span><span>5</span>
+                        <span>4</span><span>3</span><span>2</span><span>1</span>
+                    </div>
+                </div>
+                
+                <div class="board-coordinates bottom">
+                    <span>a</span><span>b</span><span>c</span><span>d</span>
+                    <span>e</span><span>f</span><span>g</span><span>h</span>
+                </div>
+            </div>
+
+            <!-- Информация об игроке -->
+            <div class="player-info player">
+                <div class="player-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="player-details">
+                    <h3 id="playerName">Игрок</h3>
+                    <div class="captured-pieces" id="playerCaptured"></div>
+                    <div class="player-score" id="playerScore">Очки: 0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Боковая панель с информацией -->
+        <div class="side-panel">
+            <div class="panel-section">
+                <h3><i class="fas fa-list"></i> История ходов</h3>
+                <div class="move-history" id="moveHistory">
+                    <!-- История ходов будет добавляться динамически -->
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3><i class="fas fa-trophy"></i> Статус игры</h3>
+                <div class="game-status" id="gameStatus">
+                    <div class="status-item">
+                        <span>Уровень ИИ:</span>
+                        <span id="aiLevel">Новичок</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Ходов сделано:</span>
+                        <span id="moveCount">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Время игры:</span>
+                        <span id="gameTime">00:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран обучения -->
+    <div class="training-screen" id="trainingScreen" style="display: none;">
+        <div class="training-container">
+            <div class="training-header">
+                <button class="control-btn" onclick="showMainMenu()">
+                    <i class="fas fa-arrow-left"></i>
+                    Назад
+                </button>
+                <h2><i class="fas fa-graduation-cap"></i> Обучающий режим</h2>
+            </div>
+            
+            <div class="training-content">
+                <div class="puzzle-selection">
+                    <h3>Выберите тип головоломки:</h3>
+                    <div class="puzzle-categories">
+                        <button class="puzzle-btn" onclick="loadPuzzles('mate-in-1')">
+                            <i class="fas fa-chess-king"></i>
+                            Мат в 1 ход
+                        </button>
+                        <button class="puzzle-btn" onclick="loadPuzzles('mate-in-2')">
+                            <i class="fas fa-chess-queen"></i>
+                            Мат в 2 хода
+                        </button>
+                        <button class="puzzle-btn" onclick="loadPuzzles('tactics')">
+                            <i class="fas fa-chess-knight"></i>
+                            Тактика
+                        </button>
+                        <button class="puzzle-btn" onclick="loadPuzzles('endgame')">
+                            <i class="fas fa-chess-rook"></i>
+                            Эндшпиль
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="puzzle-game" id="puzzleGame" style="display: none;">
+                    <div class="puzzle-info">
+                        <h4 id="puzzleTitle">Головоломка #1</h4>
+                        <p id="puzzleDescription">Найдите лучший ход для белых</p>
+                        <div class="puzzle-progress">
+                            <span>Прогресс: </span>
+                            <span id="puzzleProgress">1 / 10</span>
+                        </div>
+                    </div>
+                    
+                    <div class="puzzle-board-container">
+                        <div class="chess-board puzzle-board" id="puzzleBoard">
+                            <!-- Доска для головоломок -->
+                        </div>
+                    </div>
+                    
+                    <div class="puzzle-controls">
+                        <button class="control-btn" onclick="resetPuzzle()">
+                            <i class="fas fa-undo"></i>
+                            Сброс
+                        </button>
+                        <button class="control-btn" onclick="getPuzzleHint()">
+                            <i class="fas fa-lightbulb"></i>
+                            Подсказка
+                        </button>
+                        <button class="control-btn" onclick="nextPuzzle()">
+                            <i class="fas fa-arrow-right"></i>
+                            Следующая
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран статистики -->
+    <div class="statistics-screen" id="statisticsScreen" style="display: none;">
+        <div class="stats-container">
+            <div class="stats-header">
+                <button class="control-btn" onclick="showMainMenu()">
+                    <i class="fas fa-arrow-left"></i>
+                    Назад
+                </button>
+                <h2><i class="fas fa-chart-bar"></i> Статистика игр</h2>
+            </div>
+            
+            <div class="stats-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalWins">0</h3>
+                            <p>Побед</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalDraws">0</h3>
+                            <p>Ничьих</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-times"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalLosses">0</h3>
+                            <p>Поражений</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalGames">0</h3>
+                            <p>Всего игр</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="achievements">
+                    <h3><i class="fas fa-medal"></i> Достижения</h3>
+                    <div class="achievement-list" id="achievementList">
+                        <!-- Достижения будут добавлены динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content">
+            <h3 id="gameOverTitle">Игра окончена</h3>
+            <p id="gameOverMessage">Поздравляем с победой!</p>
+            <div class="modal-buttons">
+                <button class="menu-btn primary" onclick="startNewGame()">Новая игра</button>
+                <button class="menu-btn" onclick="closeModal('gameOverModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="promotionModal">
+        <div class="modal-content">
+            <h3>Превращение пешки</h3>
+            <p>Выберите фигуру для превращения:</p>
+            <div class="promotion-pieces">
+                <button class="piece-btn" onclick="promotePawn('queen')">
+                    <span class="chess-piece">♕</span>
+                    Ферзь
+                </button>
+                <button class="piece-btn" onclick="promotePawn('rook')">
+                    <span class="chess-piece">♖</span>
+                    Ладья
+                </button>
+                <button class="piece-btn" onclick="promotePawn('bishop')">
+                    <span class="chess-piece">♗</span>
+                    Слон
+                </button>
+                <button class="piece-btn" onclick="promotePawn('knight')">
+                    <span class="chess-piece">♘</span>
+                    Конь
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Индикатор загрузки -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="chess-loader">
+                <i class="fas fa-chess-king rotating"></i>
+            </div>
+            <h3>ИИ думает...</h3>
+            <p>Пожалуйста, подождите</p>
+        </div>
+    </div>
+
+    <!-- Подключение JavaScript -->
+    <script src="js/chess-engine.js"></script>
+    <script src="js/ai-engine.js"></script>
+    <script src="js/game-logic.js"></script>
+    <script src="js/puzzle-data.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

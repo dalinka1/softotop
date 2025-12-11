@@ -1,0 +1,94 @@
+﻿.menucontainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+    padding: 10px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 1250;
+    gap: 10px;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.menu-hover-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    z-index: 1250;
+    background: transparent;
+}
+
+/* меню появляется при наведении */
+.menu-hover-area:hover + .menucontainer,
+.menucontainer:hover {
+    transform: translateY(0);
+}
+
+.menulogo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    flex-shrink: 0;
+}
+
+.menu-wrapper-head {
+    display: flex;
+    align-items: center;
+    max-width: 80%;
+    gap: 5px;
+    overflow: hidden;
+}
+
+.nav-menu-head {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 5px;
+    border-radius: 12px;
+    background: #f9f9f9;
+    scroll-behavior: smooth;
+    flex-grow: 1;
+}
+
+.nav-menu-head a {
+    text-decoration: none;
+    color: #333;
+    padding: 8px 16px;
+    border-radius: 12px;
+    background: #fff;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.nav-menu-head a:hover {
+    background: #e0f7fa;
+}
+
+.scroll-btn {
+    background: #eee;
+    border: none;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.scroll-btn:hover {
+    background: #ddd;
+}
+
+.nav-menu-head::-webkit-scrollbar {
+    display: none;
+}

@@ -1,0 +1,1191 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Переводчик English-Russian с анализом предложений</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+     <link rel="stylesheet" href="/menu/menu.css">
+  <script src="/menu/menu.js" defer></script>
+<style>
+        .sentence-container {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: #fafafa;
+        }
+        .dark .sentence-container {
+            border-color: #374151;
+            background: #1f2937;
+        }
+        
+        .word-pair {
+            display: inline-block;
+            margin: 2px;
+            text-align: center;
+            vertical-align: top;
+        }
+        .translation {
+            font-size: 0.75em;
+            color: #3b82f6;
+            display: block;
+            min-height: 1.2em;
+            font-weight: 600;
+            border-radius: 4px;
+            padding: 1px 4px;
+            background: rgba(59, 130, 246, 0.1);
+            margin-bottom: 2px;
+        }
+        .original {
+            color: #374151;
+            font-weight: 500;
+        }
+        .untranslated .translation {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .untranslated .translation:after {
+            content: '?';
+            font-weight: bold;
+        }
+        .dark .translation {
+            color: #60a5fa;
+            background: rgba(96, 165, 250, 0.2);
+        }
+        .dark .original {
+            color: #d1d5db;
+        }
+        .dark .untranslated .translation {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.2);
+        }
+        .editable {
+            cursor: pointer;
+            border: 1px dashed transparent;
+        }
+        .editable:hover {
+            border-color: #3b82f6;
+        }
+        
+        .sentence-translation {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: #1e40af;
+        }
+        .dark .sentence-translation {
+            background: #1e3a8a;
+            color: #bfdbfe;
+        }
+        
+        .sentence-original {
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .bounce-in {
+            animation: bounceIn 0.6s ease-out;
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .sentence-number {
+            position: absolute;
+            top: -8px;
+            left: 15px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+        .dark .sentence-number {
+            background: #60a5fa;
+            color: #1e3a8a;
+        }
+        
+        .api-status {
+            font-size: 0.75em;
+            margin-top: 5px;
+            display: flex;
+            gap: 10px;
+        }
+        .api-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .api-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .api-fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body class="min-h-screen transition-colors duration-300 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-2 bounce-in">
+                <i class="fas fa-language mr-3 text-blue-600"></i>
+                Переводчик с анализом предложений
+            </h1>
+            <p class="text-gray-600 dark:text-gray-300">Перевод по предложениям с детальным анализом каждого слова</p>
+            <div class="api-status mt-2 justify-center text-xs">
+                <span class="api-badge api-success">
+                    <i class="fas fa-database"></i> Словарь: 500+ слов
+                </span>
+                <span class="api-badge api-success" id="apiStatus">
+                    <i class="fas fa-globe"></i> API: Готов
+                </span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="mb-6 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex gap-2">
+                <button id="themeToggle" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:inline"></i>
+                </button>
+                <button id="clearBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                    <i class="fas fa-trash mr-2"></i>Очистить
+                </button>
+                <button id="exportBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                    <i class="fas fa-download mr-2"></i>Экспорт
+                </button>
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-300">
+                <span id="sentenceCount">Предложений: 0</span> | 
+                <span id="wordCount">Слов: 0</span> | 
+                <span id="translatedCount">Переведено: 0</span> |
+                <span id="accuracy">Точность: 0%</span>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 fade-in">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Введите английский текст:
+            </label>
+            <textarea 
+                id="inputText" 
+                class="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+                rows="6"
+                placeholder="Вставьте или введите английский текст здесь. Текст будет автоматически разделен на предложения..."
+            ></textarea>
+            <div class="mt-4 flex gap-3">
+                <button id="translateBtn" class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    <i class="fas fa-language mr-2"></i>Перевести по предложениям
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="progressContainer" class="mb-6 hidden">
+            <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div id="progressBar" class="progress-bar bg-blue-600 h-3 rounded-full" style="width: 0%"></div>
+            </div>
+            <p id="progressText" class="text-sm text-gray-600 dark:text-gray-300 mt-2 text-center">Подготовка к переводу...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hidden fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Результат перевода по предложениям:</h3>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    Нажмите на перевод слова для редактирования
+                </div>
+            </div>
+            <div id="translationResult" class="space-y-4"></div>
+        </div>
+
+        <!-- Custom Dictionary Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-6 fade-in">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                <i class="fas fa-book mr-2"></i>Пользовательский словарь
+            </h3>
+            <div class="grid md:grid-cols-3 gap-4">
+                <input 
+                    id="customEnglish" 
+                    type="text" 
+                    placeholder="English word"
+                    class="p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                >
+                <input 
+                    id="customRussian" 
+                    type="text" 
+                    placeholder="Русский перевод"
+                    class="p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                >
+                <button id="addCustomBtn" class="bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Добавить
+                </button>
+            </div>
+            <div id="customWords" class="mt-4 flex flex-wrap gap-2"></div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 mx-4">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Редактировать перевод</h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Английское слово:</label>
+                <input id="editEnglish" type="text" readonly class="w-full p-3 bg-gray-100 dark:bg-gray-700 border rounded-lg dark:text-white">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Русский перевод:</label>
+                <input id="editRussian" type="text" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+            </div>
+            <div class="flex gap-3">
+                <button id="saveEdit" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Сохранить</button>
+                <button id="cancelEdit" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Расширенный встроенный словарь English-Russian
+        const builtInDictionary = {
+            // Артикли, местоимения, базовые слова
+            'the': 'этот/эта/это', 'a': 'один/одна', 'an': 'один/одна', 'and': 'и', 'or': 'или', 'but': 'но',
+            'in': 'в', 'on': 'на', 'at': 'в/на', 'to': 'к/в', 'for': 'для', 'of': 'из/от', 'with': 'с',
+            'by': 'по/у', 'from': 'от/из', 'up': 'вверх', 'about': 'о/около', 'into': 'в', 'through': 'через',
+            'during': 'во время', 'before': 'до', 'after': 'после', 'above': 'над', 'below': 'под',
+            'between': 'между', 'among': 'среди', 'around': 'вокруг', 'near': 'около', 'far': 'далеко',
+            'out': 'из', 'off': 'выключен', 'over': 'над', 'under': 'под', 'again': 'снова', 'further': 'дальше',
+            'then': 'тогда', 'once': 'однажды', 'here': 'здесь', 'there': 'там', 'when': 'когда', 'where': 'где',
+            'why': 'почему', 'how': 'как', 'all': 'все', 'each': 'каждый', 'every': 'каждый', 'both': 'оба',
+            'few': 'несколько', 'more': 'больше', 'most': 'большинство', 'other': 'другой', 'some': 'некоторый',
+            'such': 'такой', 'no': 'нет', 'nor': 'ни', 'not': 'не', 'only': 'только', 'own': 'собственный',
+            'same': 'тот же', 'so': 'так', 'than': 'чем', 'too': 'тоже', 'very': 'очень', 'much': 'много',
+            'many': 'много', 'any': 'любой', 'also': 'также', 'as': 'как', 'because': 'потому что',
+            
+            // Местоимения
+            'i': 'я', 'you': 'ты/вы', 'he': 'он', 'she': 'она', 'it': 'это', 'we': 'мы', 'they': 'они',
+            'me': 'мне/меня', 'him': 'его/ему', 'her': 'её/ей', 'us': 'нас/нам', 'them': 'их/им',
+            'my': 'мой/моя', 'your': 'твой/ваш', 'his': 'его', 'its': 'его/её', 'our': 'наш', 'their': 'их',
+            'myself': 'себя', 'yourself': 'себя', 'himself': 'себя', 'herself': 'себя', 'itself': 'себя',
+            'ourselves': 'себя', 'yourselves': 'себя', 'themselves': 'себя',
+            'this': 'этот', 'that': 'тот', 'these': 'эти', 'those': 'те', 'what': 'что', 'which': 'который',
+            'who': 'кто', 'whom': 'кого', 'whose': 'чей', 'someone': 'кто-то', 'anyone': 'кто-нибудь',
+            'everyone': 'все', 'nobody': 'никто', 'something': 'что-то', 'anything': 'что-нибудь',
+            'everything': 'все', 'nothing': 'ничто',
+            
+            // Глаголы (базовые формы и вариации)
+            'be': 'быть', 'am': 'есть', 'is': 'есть', 'are': 'есть', 'was': 'был', 'were': 'были', 'been': 'был',
+            'being': 'являясь', 'have': 'иметь', 'has': 'имеет', 'had': 'имел', 'having': 'имея',
+            'do': 'делать', 'does': 'делает', 'did': 'делал', 'done': 'сделано', 'doing': 'делая',
+            'will': 'будет', 'would': 'бы', 'could': 'мог бы', 'should': 'должен', 'may': 'может', 
+            'might': 'мог бы', 'can': 'могу', 'must': 'должен', 'shall': 'должен',
+            
+            'go': 'идти', 'goes': 'идёт', 'went': 'пошёл', 'gone': 'ушёл', 'going': 'идущий',
+            'come': 'приходить', 'comes': 'приходит', 'came': 'пришёл', 'coming': 'приходящий',
+            'get': 'получать', 'gets': 'получает', 'got': 'получил', 'gotten': 'получен', 'getting': 'получающий',
+            'make': 'делать', 'makes': 'делает', 'made': 'сделал', 'making': 'делающий',
+            'take': 'брать', 'takes': 'берёт', 'took': 'взял', 'taken': 'взят', 'taking': 'берущий',
+            'see': 'видеть', 'sees': 'видит', 'saw': 'видел', 'seen': 'виден', 'seeing': 'видящий',
+            'know': 'знать', 'knows': 'знает', 'knew': 'знал', 'known': 'известен', 'knowing': 'знающий',
+            'think': 'думать', 'thinks': 'думает', 'thought': 'думал', 'thinking': 'думающий',
+            'look': 'смотреть', 'looks': 'смотрит', 'looked': 'смотрел', 'looking': 'смотрящий',
+            'use': 'использовать', 'uses': 'использует', 'used': 'использовал', 'using': 'используя',
+            'find': 'находить', 'finds': 'находит', 'found': 'нашёл', 'finding': 'находящий',
+            'give': 'давать', 'gives': 'даёт', 'gave': 'дал', 'given': 'дан', 'giving': 'дающий',
+            'tell': 'говорить', 'tells': 'говорит', 'told': 'сказал', 'telling': 'говорящий',
+            'ask': 'спрашивать', 'asks': 'спрашивает', 'asked': 'спросил', 'asking': 'спрашивающий',
+            'work': 'работать', 'works': 'работает', 'worked': 'работал', 'working': 'работающий',
+            'seem': 'казаться', 'seems': 'кажется', 'seemed': 'казался', 'seeming': 'кажущийся',
+            'feel': 'чувствовать', 'feels': 'чувствует', 'felt': 'чувствовал', 'feeling': 'чувство',
+            'try': 'пытаться', 'tries': 'пытается', 'tried': 'пытался', 'trying': 'пытающийся',
+            'leave': 'покидать', 'leaves': 'покидает', 'left': 'покинул', 'leaving': 'покидающий',
+            'call': 'звонить', 'calls': 'звонит', 'called': 'позвонил', 'calling': 'звонящий',
+            'want': 'хотеть', 'wants': 'хочет', 'wanted': 'хотел', 'wanting': 'желающий',
+            'need': 'нуждаться', 'needs': 'нуждается', 'needed': 'нуждался', 'needing': 'нуждающийся',
+            'like': 'нравиться', 'likes': 'нравится', 'liked': 'понравилось', 'liking': 'любящий',
+            'love': 'любить', 'loves': 'любит', 'loved': 'любил', 'loving': 'любящий',
+            'help': 'помогать', 'helps': 'помогает', 'helped': 'помог', 'helping': 'помогающий',
+            'play': 'играть', 'plays': 'играет', 'played': 'играл', 'playing': 'играющий',
+            'run': 'бежать', 'runs': 'бежит', 'ran': 'бежал', 'running': 'бегущий',
+            'walk': 'идти', 'walks': 'идёт', 'walked': 'шёл', 'walking': 'идущий',
+            'talk': 'говорить', 'talks': 'говорит', 'talked': 'говорил', 'talking': 'говорящий',
+            'speak': 'говорить', 'speaks': 'говорит', 'spoke': 'говорил', 'spoken': 'сказан', 'speaking': 'говорящий',
+            'read': 'читать', 'reads': 'читает', 'reading': 'читающий',
+            'write': 'писать', 'writes': 'пишет', 'wrote': 'написал', 'written': 'написан', 'writing': 'пишущий',
+            'eat': 'есть', 'eats': 'ест', 'ate': 'ел', 'eaten': 'съеден', 'eating': 'едящий',
+            'drink': 'пить', 'drinks': 'пьёт', 'drank': 'пил', 'drunk': 'выпит', 'drinking': 'пьющий',
+            'sleep': 'спать', 'sleeps': 'спит', 'slept': 'спал', 'sleeping': 'спящий',
+            'buy': 'покупать', 'buys': 'покупает', 'bought': 'купил', 'buying': 'покупающий',
+            'sell': 'продавать', 'sells': 'продаёт', 'sold': 'продал', 'selling': 'продающий',
+            'pay': 'платить', 'pays': 'платит', 'paid': 'заплатил', 'paying': 'платящий',
+            'cost': 'стоить', 'costs': 'стоит', 'costing': 'стоящий',
+            'spend': 'тратить', 'spends': 'тратит', 'spent': 'потратил', 'spending': 'тратящий',
+            'live': 'жить', 'lives': 'живёт', 'lived': 'жил', 'living': 'живущий',
+            'die': 'умирать', 'dies': 'умирает', 'died': 'умер', 'dying': 'умирающий',
+            'kill': 'убивать', 'kills': 'убивает', 'killed': 'убил', 'killing': 'убивающий',
+            'save': 'спасать', 'saves': 'спасает', 'saved': 'спас', 'saving': 'спасающий',
+            'lose': 'терять', 'loses': 'теряет', 'lost': 'потерял', 'losing': 'теряющий',
+            'win': 'выигрывать', 'wins': 'выигрывает', 'won': 'выиграл', 'winning': 'выигрывающий',
+            'hope': 'надеяться', 'hopes': 'надеется', 'hoped': 'надеялся', 'hoping': 'надеющийся',
+            'wish': 'желать', 'wishes': 'желает', 'wished': 'желал', 'wishing': 'желающий',
+            'decide': 'решать', 'decides': 'решает', 'decided': 'решил', 'deciding': 'решающий',
+            'choose': 'выбирать', 'chooses': 'выбирает', 'chose': 'выбрал', 'chosen': 'выбран', 'choosing': 'выбирающий',
+            'stand': 'стоять', 'stands': 'стоит', 'stood': 'стоял', 'standing': 'стоящий',
+            'sit': 'сидеть', 'sits': 'сидит', 'sat': 'сидел', 'sitting': 'сидящий',
+            'turn': 'поворачивать', 'turns': 'поворачивает', 'turned': 'повернул', 'turning': 'поворачивающий',
+            'move': 'двигаться', 'moves': 'двигается', 'moved': 'двигался', 'moving': 'движущийся',
+            'start': 'начинать', 'starts': 'начинает', 'started': 'начал', 'starting': 'начинающий',
+            'stop': 'останавливать', 'stops': 'останавливает', 'stopped': 'остановил', 'stopping': 'останавливающий',
+            'open': 'открывать', 'opens': 'открывает', 'opened': 'открыл', 'opening': 'открывающий',
+            'close': 'закрывать', 'closes': 'закрывает', 'closed': 'закрыл', 'closing': 'закрывающий',
+            'bring': 'приносить', 'brings': 'приносит', 'brought': 'принёс', 'bringing': 'приносящий',
+            'send': 'посылать', 'sends': 'посылает', 'sent': 'послал', 'sending': 'посылающий',
+            'show': 'показывать', 'shows': 'показывает', 'showed': 'показал', 'shown': 'показан', 'showing': 'показывающий',
+            'hear': 'слышать', 'hears': 'слышит', 'heard': 'слышал', 'hearing': 'слышащий',
+            'learn': 'учиться', 'learns': 'учится', 'learned': 'учился', 'learnt': 'выучен', 'learning': 'учащийся',
+            'teach': 'учить', 'teaches': 'учит', 'taught': 'учил', 'teaching': 'учащий',
+            'understand': 'понимать', 'understands': 'понимает', 'understood': 'понял', 'understanding': 'понимающий',
+            'remember': 'помнить', 'remembers': 'помнит', 'remembered': 'помнил', 'remembering': 'помнящий',
+            'forget': 'забывать', 'forgets': 'забывает', 'forgot': 'забыл', 'forgotten': 'забыт', 'forgetting': 'забывающий',
+            'believe': 'верить', 'believes': 'верит', 'believed': 'верил', 'believing': 'верящий',
+            'become': 'становиться', 'becomes': 'становится', 'became': 'стал', 'becoming': 'становящийся',
+            'begin': 'начинать', 'begins': 'начинает', 'began': 'начал', 'begun': 'начат', 'beginning': 'начинающий',
+            'keep': 'хранить', 'keeps': 'хранит', 'kept': 'хранил', 'keeping': 'хранящий',
+            'hold': 'держать', 'holds': 'держит', 'held': 'держал', 'holding': 'держащий',
+            'put': 'класть', 'puts': 'кладёт', 'putting': 'кладущий',
+            'set': 'устанавливать', 'sets': 'устанавливает', 'setting': 'устанавливающий',
+            'let': 'позволять', 'lets': 'позволяет', 'letting': 'позволяющий',
+            'meet': 'встречать', 'meets': 'встречает', 'met': 'встретил', 'meeting': 'встречающий',
+            'reach': 'достигать', 'reaches': 'достигает', 'reached': 'достиг', 'reaching': 'достигающий',
+            'follow': 'следовать', 'follows': 'следует', 'followed': 'следовал', 'following': 'следующий',
+            'lead': 'вести', 'leads': 'ведёт', 'led': 'вёл', 'leading': 'ведущий',
+            'change': 'менять', 'changes': 'меняет', 'changed': 'изменил', 'changing': 'меняющий',
+            'happen': 'происходить', 'happens': 'происходит', 'happened': 'произошло', 'happening': 'происходящий',
+            'wait': 'ждать', 'waits': 'ждёт', 'waited': 'ждал', 'waiting': 'ждущий',
+            'stay': 'оставаться', 'stays': 'остаётся', 'stayed': 'остался', 'staying': 'остающийся',
+            'build': 'строить', 'builds': 'строит', 'built': 'построил', 'building': 'строящий',
+            'grow': 'расти', 'grows': 'растёт', 'grew': 'рос', 'grown': 'вырос', 'growing': 'растущий',
+            'carry': 'нести', 'carries': 'несёт', 'carried': 'нёс', 'carrying': 'несущий',
+            'break': 'ломать', 'breaks': 'ломает', 'broke': 'сломал', 'broken': 'сломан', 'breaking': 'ломающий',
+            'cut': 'резать', 'cuts': 'режет', 'cutting': 'режущий',
+            'fall': 'падать', 'falls': 'падает', 'fell': 'упал', 'fallen': 'упавший', 'falling': 'падающий',
+            'rise': 'подниматься', 'rises': 'поднимается', 'rose': 'поднялся', 'risen': 'поднявшийся', 'rising': 'поднимающийся',
+            'catch': 'ловить', 'catches': 'ловит', 'caught': 'поймал', 'catching': 'ловящий',
+            'throw': 'бросать', 'throws': 'бросает', 'threw': 'бросил', 'thrown': 'брошен', 'throwing': 'бросающий',
+            
+            // Прилагательные
+            'good': 'хороший', 'better': 'лучше', 'best': 'лучший',
+            'bad': 'плохой', 'worse': 'хуже', 'worst': 'худший',
+            'big': 'большой', 'bigger': 'больше', 'biggest': 'самый большой',
+            'small': 'маленький', 'smaller': 'меньше', 'smallest': 'самый маленький',
+            'long': 'длинный', 'longer': 'длиннее', 'longest': 'самый длинный',
+            'short': 'короткий', 'shorter': 'короче', 'shortest': 'самый короткий',
+            'high': 'высокий', 'higher': 'выше', 'highest': 'самый высокий',
+            'low': 'низкий', 'lower': 'ниже', 'lowest': 'самый низкий',
+            'old': 'старый', 'older': 'старше', 'oldest': 'самый старый',
+            'new': 'новый', 'newer': 'новее', 'newest': 'самый новый',
+            'young': 'молодой', 'younger': 'моложе', 'youngest': 'самый молодой',
+            'hot': 'горячий', 'hotter': 'горячее', 'hottest': 'самый горячий',
+            'cold': 'холодный', 'colder': 'холоднее', 'coldest': 'самый холодный',
+            'warm': 'тёплый', 'warmer': 'теплее', 'warmest': 'самый тёплый',
+            'cool': 'прохладный', 'cooler': 'прохладнее', 'coolest': 'самый прохладный',
+            'fast': 'быстрый', 'faster': 'быстрее', 'fastest': 'самый быстрый',
+            'slow': 'медленный', 'slower': 'медленнее', 'slowest': 'самый медленный',
+            'easy': 'лёгкий', 'easier': 'легче', 'easiest': 'самый лёгкий',
+            'hard': 'трудный', 'harder': 'труднее', 'hardest': 'самый трудный',
+            'light': 'лёгкий', 'lighter': 'легче', 'lightest': 'самый лёгкий',
+            'heavy': 'тяжёлый', 'heavier': 'тяжелее', 'heaviest': 'самый тяжёлый',
+            'clean': 'чистый', 'cleaner': 'чище', 'cleanest': 'самый чистый',
+            'dirty': 'грязный', 'dirtier': 'грязнее', 'dirtiest': 'самый грязный',
+            'beautiful': 'красивый', 'ugly': 'уродливый',
+            'rich': 'богатый', 'richer': 'богаче', 'richest': 'самый богатый',
+            'poor': 'бедный', 'poorer': 'беднее', 'poorest': 'самый бедный',
+            'happy': 'счастливый', 'happier': 'счастливее', 'happiest': 'самый счастливый',
+            'sad': 'грустный', 'sadder': 'грустнее', 'saddest': 'самый грустный',
+            'angry': 'злой', 'angrier': 'злее', 'angriest': 'самый злой',
+            'afraid': 'боящийся', 'tired': 'уставший', 'hungry': 'голодный', 'thirsty': 'жаждущий',
+            'free': 'свободный', 'freer': 'свободнее', 'freest': 'самый свободный',
+            'busy': 'занятый', 'busier': 'занятнее', 'busiest': 'самый занятый',
+            'ready': 'готовый', 'careful': 'осторожный',
+            'safe': 'безопасный', 'safer': 'безопаснее', 'safest': 'самый безопасный',
+            'dangerous': 'опасный', 'strong': 'сильный', 'stronger': 'сильнее', 'strongest': 'самый сильный',
+            'weak': 'слабый', 'weaker': 'слабее', 'weakest': 'самый слабый',
+            'healthy': 'здоровый', 'healthier': 'здоровее', 'healthiest': 'самый здоровый',
+            'sick': 'больной', 'dead': 'мёртвый', 'alive': 'живой',
+            'right': 'правый', 'left': 'левый', 'wrong': 'неправильный', 'correct': 'правильный',
+            'true': 'истинный', 'false': 'ложный', 'real': 'реальный', 'fake': 'поддельный',
+            'full': 'полный', 'fuller': 'полнее', 'fullest': 'самый полный',
+            'empty': 'пустой', 'emptier': 'пустее', 'emptiest': 'самый пустой',
+            'open': 'открытый', 'closed': 'закрытый', 'loud': 'громкий', 'quiet': 'тихий',
+            'dark': 'тёмный', 'darker': 'темнее', 'darkest': 'самый тёмный',
+            'bright': 'яркий', 'brighter': 'ярче', 'brightest': 'самый яркий',
+            'wide': 'широкий', 'wider': 'шире', 'widest': 'самый широкий',
+            'narrow': 'узкий', 'narrower': 'уже', 'narrowest': 'самый узкий',
+            'thick': 'толстый', 'thicker': 'толще', 'thickest': 'самый толстый',
+            'thin': 'тонкий', 'thinner': 'тоньше', 'thinnest': 'самый тонкий',
+            'soft': 'мягкий', 'softer': 'мягче', 'softest': 'самый мягкий',
+            'hard': 'твёрдый', 'harder': 'твёрже', 'hardest': 'самый твёрдый',
+            'wet': 'мокрый', 'wetter': 'мокрее', 'wettest': 'самый мокрый',
+            'dry': 'сухой', 'drier': 'суше', 'driest': 'самый сухой',
+            'sweet': 'сладкий', 'sweeter': 'слаще', 'sweetest': 'самый сладкий',
+            'bitter': 'горький', 'sour': 'кислый', 'salty': 'солёный',
+            'smart': 'умный', 'smarter': 'умнее', 'smartest': 'самый умный',
+            'stupid': 'глупый', 'clever': 'умный', 'wise': 'мудрый',
+            'kind': 'добрый', 'kinder': 'добрее', 'kindest': 'самый добрый',
+            'cruel': 'жестокий', 'gentle': 'нежный', 'rough': 'грубый',
+            'lazy': 'ленивый', 'lazier': 'ленивее', 'laziest': 'самый ленивый',
+            'active': 'активный', 'brave': 'храбрый', 'shy': 'застенчивый',
+            'friendly': 'дружелюбный', 'funny': 'смешной', 'serious': 'серьёзный',
+            'strange': 'странный', 'normal': 'нормальный', 'special': 'особенный',
+            'important': 'важный', 'necessary': 'необходимый', 'possible': 'возможный',
+            'impossible': 'невозможный', 'sure': 'уверенный', 'certain': 'определённый',
+            'difficult': 'трудный', 'simple': 'простой', 'clear': 'ясный',
+            'popular': 'популярный', 'famous': 'знаменитый', 'common': 'общий',
+            'rare': 'редкий', 'different': 'разный', 'similar': 'похожий',
+            'equal': 'равный', 'main': 'главный', 'final': 'финальный',
+            'early': 'ранний', 'earlier': 'раньше', 'earliest': 'самый ранний',
+            'late': 'поздний', 'later': 'позже', 'latest': 'самый поздний',
+            'next': 'следующий', 'previous': 'предыдущий', 'present': 'настоящий',
+            'past': 'прошлый', 'future': 'будущий', 'modern': 'современный',
+            'ancient': 'древний', 'recent': 'недавний', 'sudden': 'внезапный',
+            'quick': 'быстрый', 'quicker': 'быстрее', 'quickest': 'самый быстрый',
+            'sharp': 'острый', 'dull': 'тупой', 'smooth': 'гладкий',
+            
+            // Существительные
+            'man': 'мужчина', 'men': 'мужчины', 'woman': 'женщина', 'women': 'женщины',
+            'boy': 'мальчик', 'boys': 'мальчики', 'girl': 'девочка', 'girls': 'девочки',
+            'child': 'ребёнок', 'children': 'дети', 'person': 'человек', 'people': 'люди',
+            'family': 'семья', 'families': 'семьи', 'friend': 'друг', 'friends': 'друзья',
+            'enemy': 'враг', 'enemies': 'враги', 'baby': 'ребёнок', 'babies': 'дети',
+            'parent': 'родитель', 'parents': 'родители', 'father': 'отец', 'mother': 'мать',
+            'brother': 'брат', 'brothers': 'братья', 'sister': 'сестра', 'sisters': 'сёстры',
+            'son': 'сын', 'sons': 'сыновья', 'daughter': 'дочь', 'daughters': 'дочери',
+            'husband': 'муж', 'wife': 'жена', 'wives': 'жёны',
+            
+            'house': 'дом', 'houses': 'дома', 'home': 'дом', 'homes': 'дома',
+            'room': 'комната', 'rooms': 'комнаты', 'door': 'дверь', 'doors': 'двери',
+            'window': 'окно', 'windows': 'окна', 'roof': 'крыша', 'roofs': 'крыши',
+            'wall': 'стена', 'walls': 'стены', 'floor': 'пол', 'floors': 'полы',
+            'ceiling': 'потолок', 'ceilings': 'потолки',
+            
+            'car': 'машина', 'cars': 'машины', 'bus': 'автобус', 'buses': 'автобусы',
+            'train': 'поезд', 'trains': 'поезда', 'plane': 'самолёт', 'planes': 'самолёты',
+            'ship': 'корабль', 'ships': 'корабли', 'boat': 'лодка', 'boats': 'лодки',
+            'bicycle': 'велосипед', 'bicycles': 'велосипеды', 'bike': 'велосипед', 'bikes': 'велосипеды',
+            'truck': 'грузовик', 'trucks': 'грузовики',
+            
+            'food': 'еда', 'water': 'вода', 'milk': 'молоко', 'coffee': 'кофе', 'tea': 'чай',
+            'bread': 'хлеб', 'meat': 'мясо', 'fish': 'рыба', 'fruit': 'фрукт', 'fruits': 'фрукты',
+            'vegetable': 'овощ', 'vegetables': 'овощи', 'apple': 'яблоко', 'apples': 'яблоки',
+            'orange': 'апельсин', 'oranges': 'апельсины', 'banana': 'банан', 'bananas': 'бананы',
+            'egg': 'яйцо', 'eggs': 'яйца', 'cheese': 'сыр', 'butter': 'масло',
+            'salt': 'соль', 'sugar': 'сахар', 'rice': 'рис', 'potato': 'картофель', 'potatoes': 'картофель',
+            
+            'money': 'деньги', 'dollar': 'доллар', 'dollars': 'доллары', 'price': 'цена', 'prices': 'цены',
+            'job': 'работа', 'jobs': 'работы', 'work': 'работа', 'works': 'работы',
+            'school': 'школа', 'schools': 'школы', 'teacher': 'учитель', 'teachers': 'учителя',
+            'student': 'студент', 'students': 'студенты', 'class': 'класс', 'classes': 'классы',
+            'lesson': 'урок', 'lessons': 'уроки', 'exam': 'экзамен', 'exams': 'экзамены',
+            'university': 'университет', 'universities': 'университеты',
+            
+            'book': 'книга', 'books': 'книги', 'paper': 'бумага', 'papers': 'бумаги',
+            'pen': 'ручка', 'pens': 'ручки', 'pencil': 'карандаш', 'pencils': 'карандаши',
+            'computer': 'компьютер', 'computers': 'компьютеры',
+            'phone': 'телефон', 'phones': 'телефоны', 'television': 'телевизор', 'televisions': 'телевизоры',
+            'radio': 'радио', 'radios': 'радио', 'music': 'музыка', 'movie': 'фильм', 'movies': 'фильмы',
+            'picture': 'картина', 'pictures': 'картины', 'photo': 'фото', 'photos': 'фото',
+            
+            'game': 'игра', 'games': 'игры', 'sport': 'спорт', 'sports': 'спорт',
+            'ball': 'мяч', 'balls': 'мячи', 'team': 'команда', 'teams': 'команды',
+            'player': 'игрок', 'players': 'игроки',
+            
+            'time': 'время', 'times': 'времена', 'day': 'день', 'days': 'дни',
+            'night': 'ночь', 'nights': 'ночи', 'morning': 'утро', 'mornings': 'утро',
+            'afternoon': 'день', 'afternoons': 'день',
+            'evening': 'вечер', 'evenings': 'вечера', 'week': 'неделя', 'weeks': 'недели',
+            'month': 'месяц', 'months': 'месяцы', 'year': 'год', 'years': 'годы',
+            'hour': 'час', 'hours': 'часы', 'minute': 'минута', 'minutes': 'минуты',
+            'second': 'секунда', 'seconds': 'секунды', 'today': 'сегодня', 'tomorrow': 'завтра',
+            'yesterday': 'вчера', 'monday': 'понедельник', 'tuesday': 'вторник', 'wednesday': 'среда',
+            'thursday': 'четверг', 'friday': 'пятница', 'saturday': 'суббота', 'sunday': 'воскресенье',
+            
+            'place': 'место', 'places': 'места', 'city': 'город', 'cities': 'города',
+            'town': 'город', 'towns': 'города', 'village': 'деревня', 'villages': 'деревни',
+            'country': 'страна', 'countries': 'страны', 'world': 'мир', 'worlds': 'миры',
+            'earth': 'земля', 'land': 'земля', 'lands': 'земли',
+            'street': 'улица', 'streets': 'улицы', 'road': 'дорога', 'roads': 'дороги',
+            'way': 'путь', 'ways': 'пути', 'park': 'парк', 'parks': 'парки',
+            'garden': 'сад', 'gardens': 'сады', 'forest': 'лес', 'forests': 'леса',
+            'mountain': 'гора', 'mountains': 'горы', 'river': 'река', 'rivers': 'реки',
+            'sea': 'море', 'seas': 'моря', 'ocean': 'океан', 'oceans': 'океаны',
+            'lake': 'озеро', 'lakes': 'озёра', 'beach': 'пляж', 'beaches': 'пляжи',
+            
+            'sun': 'солнце', 'moon': 'луна', 'star': 'звезда', 'stars': 'звёзды',
+            'sky': 'небо', 'skies': 'небеса', 'cloud': 'облако', 'clouds': 'облака',
+            'rain': 'дождь', 'rains': 'дожди', 'snow': 'снег', 'wind': 'ветер', 'winds': 'ветры',
+            'weather': 'погода', 'storm': 'шторм', 'storms': 'штормы',
+            
+            'fire': 'огонь', 'fires': 'огни', 'tree': 'дерево', 'trees': 'деревья',
+            'flower': 'цветок', 'flowers': 'цветы', 'grass': 'трава', 'plant': 'растение', 'plants': 'растения',
+            'leaf': 'лист', 'leaves': 'листья', 'root': 'корень', 'roots': 'корни',
+            
+            'animal': 'животное', 'animals': 'животные', 'dog': 'собака', 'dogs': 'собаки',
+            'cat': 'кошка', 'cats': 'кошки', 'horse': 'лошадь', 'horses': 'лошади',
+            'bird': 'птица', 'birds': 'птицы', 'cow': 'корова', 'cows': 'коровы',
+            'pig': 'свинья', 'pigs': 'свиньи', 'sheep': 'овца', 'lion': 'лев', 'lions': 'львы',
+            'tiger': 'тигр', 'tigers': 'тигры', 'bear': 'медведь', 'bears': 'медведи',
+            'elephant': 'слон', 'elephants': 'слоны', 'mouse': 'мышь', 'mice': 'мыши',
+            'rabbit': 'кролик', 'rabbits': 'кролики', 'chicken': 'курица', 'chickens': 'куры',
+            
+            'hand': 'рука', 'hands': 'руки', 'foot': 'нога', 'feet': 'ноги',
+            'arm': 'рука', 'arms': 'руки', 'leg': 'нога', 'legs': 'ноги',
+            'head': 'голова', 'heads': 'головы', 'eye': 'глаз', 'eyes': 'глаза',
+            'ear': 'ухо', 'ears': 'уши', 'mouth': 'рот', 'mouths': 'рты',
+            'nose': 'нос', 'noses': 'носы', 'tooth': 'зуб', 'teeth': 'зубы',
+            'hair': 'волосы', 'face': 'лицо', 'faces': 'лица', 'body': 'тело', 'bodies': 'тела',
+            'heart': 'сердце', 'hearts': 'сердца', 'mind': 'разум', 'minds': 'умы',
+            'brain': 'мозг', 'brains': 'мозги', 'blood': 'кровь', 'bone': 'кость', 'bones': 'кости',
+            'skin': 'кожа', 'finger': 'палец', 'fingers': 'пальцы',
+            
+            'voice': 'голос', 'voices': 'голоса', 'sound': 'звук', 'sounds': 'звуки',
+            'word': 'слово', 'words': 'слова', 'name': 'имя', 'names': 'имена',
+            'language': 'язык', 'languages': 'языки', 'story': 'история', 'stories': 'истории',
+            'news': 'новости', 'letter': 'письмо', 'letters': 'письма',
+            
+            'question': 'вопрос', 'questions': 'вопросы', 'answer': 'ответ', 'answers': 'ответы',
+            'problem': 'проблема', 'problems': 'проблемы', 'solution': 'решение', 'solutions': 'решения',
+            'idea': 'идея', 'ideas': 'идеи', 'plan': 'план', 'plans': 'планы',
+            'fact': 'факт', 'facts': 'факты', 'example': 'пример', 'examples': 'примеры',
+            'reason': 'причина', 'reasons': 'причины', 'result': 'результат', 'results': 'результаты',
+            
+            'end': 'конец', 'ends': 'концы', 'beginning': 'начало', 'beginnings': 'начала',
+            'middle': 'середина', 'middles': 'середины',
+            'side': 'сторона', 'sides': 'стороны', 'top': 'верх', 'tops': 'верха',
+            'bottom': 'низ', 'bottoms': 'низы', 'front': 'перед', 'fronts': 'переды',
+            'back': 'спина', 'backs': 'спины', 'inside': 'внутри', 'outside': 'снаружи',
+            'center': 'центр', 'centers': 'центры', 'edge': 'край', 'edges': 'края',
+            'corner': 'угол', 'corners': 'углы',
+            
+            'part': 'часть', 'parts': 'части', 'whole': 'целое', 'wholes': 'целое',
+            'piece': 'кусок', 'pieces': 'куски', 'bit': 'кусочек', 'bits': 'кусочки',
+            'half': 'половина', 'halves': 'половины',
+            
+            'number': 'число', 'numbers': 'числа', 'amount': 'количество', 'amounts': 'количества',
+            'line': 'линия', 'lines': 'линии', 'point': 'точка', 'points': 'точки',
+            'space': 'пространство', 'spaces': 'пространства', 'area': 'область', 'areas': 'области',
+            'size': 'размер', 'sizes': 'размеры', 'shape': 'форма', 'shapes': 'формы',
+            'color': 'цвет', 'colors': 'цвета', 'colour': 'цвет', 'colours': 'цвета',
+            
+            'table': 'стол', 'tables': 'столы', 'chair': 'стул', 'chairs': 'стулья',
+            'bed': 'кровать', 'beds': 'кровати', 'box': 'коробка', 'boxes': 'коробки',
+            'bag': 'сумка', 'bags': 'сумки', 'bottle': 'бутылка', 'bottles': 'бутылки',
+            'cup': 'чашка', 'cups': 'чашки', 'glass': 'стакан', 'glasses': 'стаканы',
+            'plate': 'тарелка', 'plates': 'тарелки', 'knife': 'нож', 'knives': 'ножи',
+            'fork': 'вилка', 'forks': 'вилки', 'spoon': 'ложка', 'spoons': 'ложки',
+            'cloth': 'ткань', 'clothes': 'одежда', 'shirt': 'рубашка', 'shirts': 'рубашки',
+            'dress': 'платье', 'dresses': 'платья', 'shoe': 'туфля', 'shoes': 'туфли',
+            'hat': 'шляпа', 'hats': 'шляпы',
+            
+            // Числа
+            'zero': 'ноль', 'one': 'один', 'two': 'два', 'three': 'три', 'four': 'четыре', 'five': 'пять',
+            'six': 'шесть', 'seven': 'семь', 'eight': 'восемь', 'nine': 'девять', 'ten': 'десять',
+            'eleven': 'одиннадцать', 'twelve': 'двенадцать', 'thirteen': 'тринадцать', 
+            'fourteen': 'четырнадцать', 'fifteen': 'пятнадцать', 'sixteen': 'шестнадцать',
+            'seventeen': 'семнадцать', 'eighteen': 'восемнадцать', 'nineteen': 'девятнадцать',
+            'twenty': 'двадцать', 'thirty': 'тридцать', 'forty': 'сорок', 'fifty': 'пятьдесят',
+            'sixty': 'шестьдесят', 'seventy': 'семьдесят', 'eighty': 'восемьдесят', 'ninety': 'девяносто',
+            'hundred': 'сто', 'thousand': 'тысяча', 'million': 'миллион',
+            'first': 'первый', 'second': 'второй', 'third': 'третий', 'fourth': 'четвёртый',
+            'fifth': 'пятый', 'sixth': 'шестой', 'seventh': 'седьмой', 'eighth': 'восьмой',
+            'ninth': 'девятый', 'tenth': 'десятый', 'last': 'последний',
+            
+            // Наречия
+            'well': 'хорошо', 'badly': 'плохо', 'quickly': 'быстро', 'slowly': 'медленно',
+            'easily': 'легко', 'hardly': 'едва', 'really': 'действительно', 'certainly': 'конечно',
+            'probably': 'вероятно', 'perhaps': 'возможно', 'maybe': 'может быть',
+            'almost': 'почти', 'already': 'уже', 'always': 'всегда', 'never': 'никогда',
+            'often': 'часто', 'sometimes': 'иногда', 'usually': 'обычно', 'together': 'вместе',
+            'alone': 'один', 'away': 'прочь', 'forward': 'вперёд', 'backward': 'назад',
+            
+            // Распространённые выражения
+            'hello': 'привет', 'hi': 'привет', 'goodbye': 'до свидания', 'bye': 'пока',
+            'please': 'пожалуйста', 'thanks': 'спасибо', 'thank': 'спасибо', 'sorry': 'извините',
+            'yes': 'да', 'yeah': 'да', 'yep': 'да', 'ok': 'хорошо', 'okay': 'хорошо',
+            'fine': 'хорошо', 'great': 'отлично', 'nice': 'хороший', 'wonderful': 'замечательный',
+            'excellent': 'отличный', 'perfect': 'идеальный', 'terrible': 'ужасный', 'awful': 'ужасный'
+        };
+
+        // Состояние приложения
+        let customDictionary = JSON.parse(localStorage.getItem('customDictionary') || '{}');
+        let translationCache = JSON.parse(localStorage.getItem('translationCache') || '{}');
+        let sentenceCache = JSON.parse(localStorage.getItem('sentenceCache') || '{}');
+        let currentEditElement = null;
+        let currentEditWord = null;
+        let apiCallCount = 0;
+        let apiSuccessCount = 0;
+
+        // DOM элементы
+        const inputText = document.getElementById('inputText');
+        const translateBtn = document.getElementById('translateBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const resultsSection = document.getElementById('resultsSection');
+        const translationResult = document.getElementById('translationResult');
+        const themeToggle = document.getElementById('themeToggle');
+        const clearBtn = document.getElementById('clearBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const customEnglish = document.getElementById('customEnglish');
+        const customRussian = document.getElementById('customRussian');
+        const addCustomBtn = document.getElementById('addCustomBtn');
+        const customWords = document.getElementById('customWords');
+        const editModal = document.getElementById('editModal');
+        const editEnglish = document.getElementById('editEnglish');
+        const editRussian = document.getElementById('editRussian');
+        const saveEdit = document.getElementById('saveEdit');
+        const cancelEdit = document.getElementById('cancelEdit');
+        const sentenceCount = document.getElementById('sentenceCount');
+        const wordCount = document.getElementById('wordCount');
+        const translatedCount = document.getElementById('translatedCount');
+        const accuracy = document.getElementById('accuracy');
+        const apiStatus = document.getElementById('apiStatus');
+
+        // Управление темой
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('darkMode', isDark);
+        });
+
+        // Функция разделения на предложения
+        function splitIntoSentences(text) {
+            // Улучшенное разделение на предложения
+            const sentences = text
+                .replace(/([.!?])\s+/g, '$1|')
+                .split('|')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+            
+            return sentences.length > 0 ? sentences : [text.trim()];
+        }
+
+        // Функция нормализации слова для поиска в словаре
+        function normalizeWord(word) {
+            const lower = word.toLowerCase();
+            
+            // Убираем окончания для поиска основы
+            if (lower.endsWith('ing')) return lower.slice(0, -3);
+            if (lower.endsWith('ed')) return lower.slice(0, -2);
+            if (lower.endsWith('es')) return lower.slice(0, -2);
+            if (lower.endsWith('s') && lower.length > 2) return lower.slice(0, -1);
+            if (lower.endsWith('ly')) return lower.slice(0, -2);
+            if (lower.endsWith('er')) return lower.slice(0, -2);
+            if (lower.endsWith('est')) return lower.slice(0, -3);
+            
+            return lower;
+        }
+
+        // Функция получения перевода слова
+        function getTranslation(word) {
+            const lowerWord = word.toLowerCase();
+            
+            // 1. Проверяем пользовательский словарь
+            if (customDictionary[lowerWord]) {
+                return customDictionary[lowerWord];
+            }
+            
+            // 2. Проверяем кэш переводов
+            if (translationCache[lowerWord]) {
+                return translationCache[lowerWord];
+            }
+            
+            // 3. Проверяем встроенный словарь (точное совпадение)
+            if (builtInDictionary[lowerWord]) {
+                return builtInDictionary[lowerWord];
+            }
+            
+            // 4. Проверяем встроенный словарь (нормализованная форма)
+            const normalized = normalizeWord(word);
+            if (builtInDictionary[normalized]) {
+                return builtInDictionary[normalized];
+            }
+            
+            return null;
+        }
+
+        // Функция перевода слова через API (множественные источники)
+        async function translateWithAPI(word) {
+            apiCallCount++;
+            
+            try {
+                // Пробуем MyMemory API
+                const response = await fetch(
+                    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|ru`
+                );
+                
+                if (!response.ok) throw new Error('API error');
+                
+                const data = await response.json();
+                
+                if (data.responseData && data.responseData.translatedText) {
+                    const translation = data.responseData.translatedText;
+                    
+                    // Проверяем качество перевода
+                    if (translation.toLowerCase() !== word.toLowerCase() && 
+                        !/[a-zA-Z]{3,}/.test(translation)) {
+                        
+                        // Сохраняем в кэш
+                        translationCache[word.toLowerCase()] = translation;
+                        localStorage.setItem('translationCache', JSON.stringify(translationCache));
+                        
+                        apiSuccessCount++;
+                        updateAPIStatus();
+                        
+                        return translation;
+                    }
+                }
+            } catch (error) {
+                console.log('MyMemory API failed:', error);
+            }
+            
+            // Если API не помог, возвращаем null
+            updateAPIStatus();
+            return null;
+        }
+
+        // Функция перевода предложения
+        async function translateSentence(sentence) {
+            const cacheKey = sentence.toLowerCase().trim();
+            
+            // Проверяем кэш
+            if (sentenceCache[cacheKey]) {
+                return sentenceCache[cacheKey];
+            }
+            
+            try {
+                // Используем MyMemory API для перевода предложения
+                const response = await fetch(
+                    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(sentence)}&langpair=en|ru`
+                );
+                
+                if (!response.ok) throw new Error('API error');
+                
+                const data = await response.json();
+                
+                if (data.responseData && data.responseData.translatedText) {
+                    const translation = data.responseData.translatedText;
+                    
+                    // Сохраняем в кэш
+                    sentenceCache[cacheKey] = translation;
+                    localStorage.setItem('sentenceCache', JSON.stringify(sentenceCache));
+                    
+                    return translation;
+                }
+            } catch (error) {
+                console.log('Sentence API translation failed:', error);
+            }
+            
+            return 'Не удалось перевести предложение';
+        }
+
+        // Обновление статуса API
+        function updateAPIStatus() {
+            const successRate = apiCallCount > 0 
+                ? Math.round((apiSuccessCount / apiCallCount) * 100) 
+                : 100;
+            
+            apiStatus.innerHTML = `
+                <i class="fas fa-globe"></i> API: ${apiCallCount} запросов (${successRate}% успешно)
+            `;
+            
+            if (successRate < 50) {
+                apiStatus.className = 'api-badge api-fail';
+            } else {
+                apiStatus.className = 'api-badge api-success';
+            }
+        }
+
+        // Основная функция перевода
+        async function translateText() {
+            const text = inputText.value.trim();
+            if (!text) return;
+
+            translateBtn.disabled = true;
+            translateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Перевожу по предложениям...';
+            
+            progressContainer.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+            
+            // Сброс счётчиков API
+            apiCallCount = 0;
+            apiSuccessCount = 0;
+            
+            // Разделение на предложения
+            const sentences = splitIntoSentences(text);
+            const totalSentences = sentences.length;
+            
+            progressText.textContent = `Обрабатываю ${totalSentences} предложений...`;
+            
+            let totalWords = 0;
+            let totalTranslatedWords = 0;
+            const processedSentences = [];
+            
+            for (let sentenceIndex = 0; sentenceIndex < sentences.length; sentenceIndex++) {
+                const sentence = sentences[sentenceIndex];
+                
+                // Обработка слов в предложении
+                const tokens = sentence.match(/\S+|\s+/g) || [];
+                const words = tokens.filter(token => /\S/.test(token) && /[a-zA-Z]/.test(token));
+                totalWords += words.length;
+                
+                const wordResults = [];
+                let sentenceTranslatedWords = 0;
+                
+                for (let i = 0; i < tokens.length; i++) {
+                    const token = tokens[i];
+                    
+                    // Пробелы
+                    if (/^\s+$/.test(token)) {
+                        wordResults.push({ type: 'space', content: token });
+                        continue;
+                    }
+                    
+                    // Разбор слова и пунктуации
+                    const match = token.match(/^(\W*)([\w'-]+)(\W*)$/);
+                    if (!match) {
+                        wordResults.push({ type: 'space', content: token });
+                        continue;
+                    }
+                    
+                    const [, startPunct, word, endPunct] = match;
+                    
+                    let translation = null;
+                    
+                    // Только для слов с английскими буквами
+                    if (word && /[a-zA-Z]/.test(word)) {
+                        // Сначала проверяем словари
+                        translation = getTranslation(word);
+                        
+                        // Если не нашли, пробуем API
+                        if (!translation) {
+                            translation = await translateWithAPI(word);
+                            
+                            // Задержка между API запросами
+                            await new Promise(resolve => setTimeout(resolve, 150));
+                        }
+                        
+                        if (translation) {
+                            sentenceTranslatedWords++;
+                            totalTranslatedWords++;
+                        }
+                    }
+                    
+                    wordResults.push({
+                        type: 'word',
+                        original: word,
+                        translation: translation,
+                        startPunct: startPunct,
+                        endPunct: endPunct,
+                        hasTranslation: !!translation
+                    });
+                }
+                
+                // Перевод всего предложения
+                const sentenceTranslation = await translateSentence(sentence);
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                processedSentences.push({
+                    original: sentence,
+                    translation: sentenceTranslation,
+                    wordResults: wordResults,
+                    translatedWordsCount: sentenceTranslatedWords,
+                    totalWordsCount: words.length
+                });
+                
+                // Обновление прогресса
+                const progress = ((sentenceIndex + 1) / totalSentences) * 100;
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `Переведено ${sentenceIndex + 1} из ${totalSentences} предложений`;
+            }
+            
+            // Отображение результатов
+            displaySentenceResults(processedSentences);
+            updateStatistics(totalSentences, totalWords, totalTranslatedWords);
+            
+            progressContainer.classList.add('hidden');
+            resultsSection.classList.remove('hidden');
+            
+            translateBtn.disabled = false;
+            translateBtn.innerHTML = '<i class="fas fa-language mr-2"></i>Перевести по предложениям';
+        }
+
+        function displaySentenceResults(sentences) {
+            translationResult.innerHTML = '';
+            
+            sentences.forEach((sentence, index) => {
+                const sentenceContainer = document.createElement('div');
+                sentenceContainer.className = 'sentence-container relative';
+                
+                // Номер предложения
+                const sentenceNumber = document.createElement('div');
+                sentenceNumber.className = 'sentence-number';
+                sentenceNumber.textContent = index + 1;
+                sentenceContainer.appendChild(sentenceNumber);
+                
+                // Оригинальное предложение с переводами слов
+                const originalDiv = document.createElement('div');
+                originalDiv.className = 'sentence-original';
+                
+                sentence.wordResults.forEach(result => {
+                    if (result.type === 'space') {
+                        const spaceSpan = document.createElement('span');
+                        spaceSpan.textContent = result.content;
+                        originalDiv.appendChild(spaceSpan);
+                    } else if (result.type === 'word') {
+                        const wordPair = document.createElement('span');
+                        wordPair.className = `word-pair ${result.hasTranslation ? '' : 'untranslated'}`;
+                        
+                        const translationSpan = document.createElement('span');
+                        translationSpan.className = 'translation editable';
+                        translationSpan.textContent = result.translation || '';
+                        translationSpan.addEventListener('click', () => editTranslation(translationSpan, result.original));
+                        
+                        const originalSpan = document.createElement('span');
+                        originalSpan.className = 'original';
+                        originalSpan.textContent = `${result.startPunct}${result.original}${result.endPunct}`;
+                        
+                        wordPair.appendChild(translationSpan);
+                        wordPair.appendChild(originalSpan);
+                        originalDiv.appendChild(wordPair);
+                    }
+                });
+                
+                // Перевод предложения
+                const sentenceTranslationDiv = document.createElement('div');
+                sentenceTranslationDiv.className = 'sentence-translation';
+                sentenceTranslationDiv.innerHTML = `
+                    <i class="fas fa-quote-left mr-2"></i>${sentence.translation}
+                `;
+                
+                sentenceContainer.appendChild(originalDiv);
+                sentenceContainer.appendChild(sentenceTranslationDiv);
+                translationResult.appendChild(sentenceContainer);
+            });
+        }
+
+        function updateStatistics(totalSentences, totalWords, translatedWords) {
+            const accuracyPercent = totalWords > 0 ? Math.round((translatedWords / totalWords) * 100) : 0;
+            
+            sentenceCount.textContent = `Предложений: ${totalSentences}`;
+            wordCount.textContent = `Слов: ${totalWords}`;
+            translatedCount.textContent = `Переведено: ${translatedWords}`;
+            accuracy.textContent = `Точность: ${accuracyPercent}%`;
+        }
+
+        function editTranslation(element, originalWord) {
+            currentEditElement = element;
+            currentEditWord = originalWord;
+            
+            editEnglish.value = originalWord;
+            editRussian.value = element.textContent;
+            editModal.classList.remove('hidden');
+            editModal.classList.add('flex');
+            editRussian.focus();
+        }
+
+        function saveTranslationEdit() {
+            const newTranslation = editRussian.value.trim();
+            if (newTranslation && currentEditElement && currentEditWord) {
+                currentEditElement.textContent = newTranslation;
+                currentEditElement.parentElement.classList.remove('untranslated');
+                
+                customDictionary[currentEditWord.toLowerCase()] = newTranslation;
+                localStorage.setItem('customDictionary', JSON.stringify(customDictionary));
+                
+                displayCustomWords();
+            }
+            closeEditModal();
+        }
+
+        function closeEditModal() {
+            editModal.classList.add('hidden');
+            editModal.classList.remove('flex');
+            currentEditElement = null;
+            currentEditWord = null;
+        }
+
+        function addCustomWord() {
+            const englishWord = customEnglish.value.trim().toLowerCase();
+            const russianTranslation = customRussian.value.trim();
+            
+            if (englishWord && russianTranslation) {
+                customDictionary[englishWord] = russianTranslation;
+                localStorage.setItem('customDictionary', JSON.stringify(customDictionary));
+                
+                customEnglish.value = '';
+                customRussian.value = '';
+                
+                displayCustomWords();
+            }
+        }
+
+        function displayCustomWords() {
+            customWords.innerHTML = '';
+            
+            Object.entries(customDictionary).forEach(([english, russian]) => {
+                const wordTag = document.createElement('span');
+                wordTag.className = 'inline-flex items-center bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full text-sm';
+                wordTag.innerHTML = `
+                    <span>${english} → ${russian}</span>
+                    <button class="ml-2 text-purple-600 dark:text-purple-300 hover:text-red-600 dark:hover:text-red-400" onclick="removeCustomWord('${english}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                customWords.appendChild(wordTag);
+            });
+        }
+
+        function removeCustomWord(word) {
+            delete customDictionary[word];
+            localStorage.setItem('customDictionary', JSON.stringify(customDictionary));
+            displayCustomWords();
+        }
+
+        function clearAll() {
+            inputText.value = '';
+            translationResult.innerHTML = '';
+            resultsSection.classList.add('hidden');
+            progressContainer.classList.add('hidden');
+            updateStatistics(0, 0, 0);
+            apiCallCount = 0;
+            apiSuccessCount = 0;
+            updateAPIStatus();
+        }
+
+        function exportResults() {
+            const sentences = translationResult.querySelectorAll('.sentence-container');
+            if (sentences.length === 0) return;
+            
+            let content = 'РЕЗУЛЬТАТ ПЕРЕВОДА ПО ПРЕДЛОЖЕНИЯМ\n';
+            content += '=====================================\n\n';
+            
+            sentences.forEach((sentence, index) => {
+                // Извлекаем оригинальный текст
+                const wordPairs = sentence.querySelectorAll('.word-pair');
+                let originalText = '';
+                wordPairs.forEach(pair => {
+                    originalText += pair.querySelector('.original').textContent;
+                });
+                
+                // Извлекаем перевод
+                const translationText = sentence.querySelector('.sentence-translation').textContent.trim();
+                
+                content += `ПРЕДЛОЖЕНИЕ ${index + 1}:\n`;
+                content += `Оригинал: ${originalText.trim()}\n`;
+                content += `Перевод: ${translationText.replace(/^.*?привет|цитата слева/, '').trim()}\n\n`;
+                
+                // Словарь слов для этого предложения
+                content += `  Словарь слов:\n`;
+                wordPairs.forEach(pair => {
+                    const original = pair.querySelector('.original').textContent.replace(/[^\w'-]/g, '');
+                    const translation = pair.querySelector('.translation').textContent;
+                    if (original && translation) {
+                        content += `    ${original} → ${translation}\n`;
+                    }
+                });
+                content += '\n';
+            });
+            
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sentence-translation-result.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Обработчики событий
+        translateBtn.addEventListener('click', translateText);
+        clearBtn.addEventListener('click', clearAll);
+        exportBtn.addEventListener('click', exportResults);
+        addCustomBtn.addEventListener('click', addCustomWord);
+        saveEdit.addEventListener('click', saveTranslationEdit);
+        cancelEdit.addEventListener('click', closeEditModal);
+
+        // Горячие клавиши
+        inputText.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                translateText();
+            }
+        });
+
+        customRussian.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                addCustomWord();
+            }
+        });
+
+        editRussian.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                saveTranslationEdit();
+            } else if (e.key === 'Escape') {
+                closeEditModal();
+            }
+        });
+
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+        });
+
+        // Глобальные функции
+        window.removeCustomWord = removeCustomWord;
+
+        // Инициализация
+        displayCustomWords();
+        updateStatistics(0, 0, 0);
+        updateAPIStatus();
+
+        // Пример текста
+        inputText.placeholder = `Попробуйте вставить текст, например:
+"Hello, my name is John. I live in a beautiful city. Today is a wonderful day and I want to go to the park with my friends. We will play football and have fun together."`;
+    </script>
+</body>
+</html>

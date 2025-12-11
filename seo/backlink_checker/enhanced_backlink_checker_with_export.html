@@ -1,0 +1,900 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проверка обратных ссылок - BackLinks - Softo.Top</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/menu/menu.css">
+    <script src="/menu/menu.js" defer></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                    <i class="fas fa-link text-blue-600 mr-3"></i>
+                    Проверка обратных ссылок - BackLinks - Softo.Top
+                </h1>
+                <p class="text-gray-600">Продвинутая проверка обратных ссылок на веб-страницах с поддержкой прокси</p>
+            </div>
+
+            <!-- Advanced Settings -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-cogs mr-2"></i>Расширенные настройки
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                        <label class="flex items-center mb-2">
+                            <input type="checkbox" id="useProxy" class="mr-2" checked>
+                            <span class="text-sm text-gray-700">Использовать прокси</span>
+                        </label>
+                        <label class="flex items-center mb-2">
+                            <input type="checkbox" id="allowUnsafe" class="mr-2">
+                            <span class="text-sm text-gray-700">Проверять небезопасные сайты</span>
+                        </label>
+                        <label class="flex items-center mb-2">
+                            <input type="checkbox" id="followRedirects" class="mr-2" checked>
+                            <span class="text-sm text-gray-700">Следовать редиректам</span>
+                        </label>
+                    </div>
+                    
+                    <div>
+                        <label for="timeout" class="block text-sm font-medium text-gray-700 mb-1">Таймаут (сек)</label>
+                        <input type="number" id="timeout" value="30" min="5" max="120" 
+                               class="w-full p-2 border border-gray-300 rounded-md text-sm">
+                        
+                        <label for="delay" class="block text-sm font-medium text-gray-700 mb-1 mt-2">Задержка между запросами (мс)</label>
+                        <input type="number" id="delay" value="1000" min="100" max="10000" 
+                               class="w-full p-2 border border-gray-300 rounded-md text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="userAgent" class="block text-sm font-medium text-gray-700 mb-1">User Agent</label>
+                        <select id="userAgent" class="w-full p-2 border border-gray-300 rounded-md text-sm">
+                            <option value="default">По умолчанию</option>
+                            <option value="chrome">Chrome Desktop</option>
+                            <option value="firefox">Firefox Desktop</option>
+                            <option value="safari">Safari Desktop</option>
+                            <option value="mobile">Mobile Browser</option>
+                            <option value="bot">Search Bot</option>
+                        </select>
+                        
+                        <label for="maxRetries" class="block text-sm font-medium text-gray-700 mb-1 mt-2">Макс. попыток</label>
+                        <input type="number" id="maxRetries" value="3" min="1" max="10" 
+                               class="w-full p-2 border border-gray-300 rounded-md text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Form -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="urlList" class="text-sm font-medium text-gray-700">
+                                <i class="fas fa-link mr-2"></i>Список URL-адресов
+                                <span class="text-xs text-green-600 ml-2">(Где Найти)</span>
+                            </label>
+                            <button 
+                                id="clearUrlList"
+                                class="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition duration-200"
+                                title="Очистить список URL">
+                                <i class="fas fa-trash mr-1"></i>Очистить
+                            </button>
+                        </div>
+                        <textarea 
+                            id="urlList" 
+                            rows="10" 
+                            class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Введите URL-адреса, каждый с новой строки:
+https://example1.com
+https://example2.com
+https://example3.com"
+                        ></textarea>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-sm text-gray-500">Каждый URL с новой строки</p>
+                            <span id="urlCount" class="text-sm text-blue-600 font-medium">0 URL</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="searchText" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-font mr-2"></i>Текст для поиска
+                        </label>
+                        <input 
+                            type="text" 
+                            id="searchText" 
+                            value="softo.top"
+                            class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+                            placeholder="Введите текст для поиска"
+                        >
+                        
+                        <div class="space-y-3 mb-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="caseSensitive" class="mr-2">
+                                <span class="text-sm text-gray-700">Учитывать регистр</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" id="wholeWord" class="mr-2">
+                                <span class="text-sm text-gray-700">Только целые слова</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" id="showContext" class="mr-2" checked>
+                                <span class="text-sm text-gray-700">Показывать контекст</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" id="checkMultiple" class="mr-2">
+                                <span class="text-sm text-gray-700">Искать несколько вхождений</span>
+                            </label>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button 
+                                id="startCheck" 
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition duration-300"
+                            >
+                                <i class="fas fa-play mr-2"></i>Начать проверку
+                            </button>
+                            <button 
+                                id="pauseCheck" 
+                                class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-3 rounded-md transition duration-300 hidden"
+                                title="Приостановить проверку"
+                            >
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            <button 
+                                id="stopCheck" 
+                                class="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-md transition duration-300 hidden"
+                                title="Остановить проверку"
+                            >
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="progressContainer" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700">Прогресс проверки</span>
+                    <div class="flex items-center space-x-4">
+                        <span id="progressText" class="text-sm text-gray-600">0 / 0</span>
+                        <span id="timeElapsed" class="text-sm text-gray-500">00:00</span>
+                        <span id="eta" class="text-sm text-gray-500">ETA: --:--</span>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div id="progressBar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div id="currentUrl" class="text-xs text-gray-500 truncate flex-1 mr-4"></div>
+                    <div id="speed" class="text-xs text-gray-500">0 URL/мин</div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="resultsContainer" class="bg-white rounded-lg shadow-md p-6 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-chart-bar mr-2"></i>Результаты проверки
+                    </h2>
+                    <div class="flex flex-wrap gap-2">
+                        <!-- Фильтры -->
+                        <button id="filterFound" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm">
+                            <i class="fas fa-filter mr-1"></i>Найденные
+                        </button>
+                        <button id="filterNotFound" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm">
+                            <i class="fas fa-filter mr-1"></i>Не найденные
+                        </button>
+                        <button id="filterAll" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm">
+                            <i class="fas fa-eye mr-1"></i>Все
+                        </button>
+                        
+                        <!-- Экспорт -->
+                        <button id="exportTxt" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-sm" title="Экспорт в TXT">
+                            <i class="fas fa-file-alt mr-1"></i>TXT
+                        </button>
+                        <button id="exportExcel" class="bg-green-700 hover:bg-green-800 text-white px-3 py-2 rounded-md text-sm" title="Экспорт в Excel">
+                            <i class="fas fa-file-excel mr-1"></i>Excel
+                        </button>
+                        <button id="exportRtf" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-md text-sm" title="Экспорт в RTF">
+                            <i class="fas fa-file-word mr-1"></i>RTF
+                        </button>
+                        <button id="exportCsv" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm" title="Экспорт в CSV">
+                            <i class="fas fa-file-csv mr-1"></i>CSV
+                        </button>
+                        <button id="exportJson" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md text-sm" title="Экспорт в JSON">
+                            <i class="fas fa-file-code mr-1"></i>JSON
+                        </button>
+                        
+                        <!-- Очистка -->
+                        <button id="clearResults" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm">
+                            <i class="fas fa-trash mr-1"></i>Очистить
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="summaryStats" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="text-blue-600 text-2xl font-bold" id="totalChecked">0</div>
+                        <div class="text-blue-800 text-sm">Всего проверено</div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <div class="text-green-600 text-2xl font-bold" id="foundCount">0</div>
+                        <div class="text-green-800 text-sm">Найдено</div>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <div class="text-red-600 text-2xl font-bold" id="notFoundCount">0</div>
+                        <div class="text-red-800 text-sm">Не найдено</div>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <div class="text-yellow-600 text-2xl font-bold" id="errorCount">0</div>
+                        <div class="text-yellow-800 text-sm">Ошибки</div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="text-purple-600 text-2xl font-bold" id="successRate">0%</div>
+                        <div class="text-purple-800 text-sm">Успешность</div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="border border-gray-300 px-4 py-2 text-left">#</th>
+                                <th class="border border-gray-300 px-4 py-2 text-left">URL</th>
+                                <th class="border border-gray-300 px-4 py-2 text-left">Статус</th>
+                                <th class="border border-gray-300 px-4 py-2 text-left">Количество</th>
+                                <th class="border border-gray-300 px-4 py-2 text-left">Время ответа</th>
+                                <th class="border border-gray-300 px-4 py-2 text-left">Контекст</th>
+                                <th class="border border-gray-300 px-4 py-2 text-left">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="enhanced_api_with_export.js"></script>
+    <script>
+        let checkResults = [];
+        let isPaused = false;
+        let isStopped = false;
+        let startTime = null;
+        let currentFilter = 'all';
+        let autoSaveTimer = null;
+
+        const userAgents = {
+            default: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            chrome: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+            safari: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+            mobile: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+            bot: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+        };
+
+        const proxyServices = [
+            url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            url => `https://cors-anywhere.herokuapp.com/${url}`,
+            url => `https://thingproxy.freeboard.io/fetch/${url}`,
+            url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+            url => `https://proxy.cors.sh/${url}`,
+            url => `https://yacdn.org/proxy/${url}`,
+        ];
+
+        async function autoSaveUrls() {
+            const urlList = document.getElementById('urlList').value.trim();
+            if (!urlList) return;
+            
+            const urls = urlList.split('\n').map(url => url.trim()).filter(url => url);
+            if (urls.length === 0) return;
+            
+            try {
+                const listId = `list_${Date.now()}`;
+                const data = {
+                    id: listId,
+                    name: `Список URL от ${new Date().toLocaleString('ru-RU')}`,
+                    urls: urls,
+                    created: new Date().toISOString()
+                };
+                
+                await fetch('./api/server.php?action=save_url_list', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+            } catch (error) {
+                console.error('Ошибка автосохранения:', error);
+            }
+        }
+
+        function updateUrlCount() {
+            const urlList = document.getElementById('urlList').value.trim();
+            const urls = urlList.split('\n').map(url => url.trim()).filter(url => url);
+            document.getElementById('urlCount').textContent = `${urls.length} URL`;
+        }
+
+        function clearUrlList() {
+            if (confirm('Вы уверены, что хотите очистить список URL?')) {
+                document.getElementById('urlList').value = '';
+                updateUrlCount();
+            }
+        }
+
+        document.getElementById('urlList').addEventListener('input', () => {
+            updateUrlCount();
+            
+            if (autoSaveTimer) {
+                clearTimeout(autoSaveTimer);
+            }
+            
+            autoSaveTimer = setTimeout(() => {
+                autoSaveUrls();
+            }, 2000);
+        });
+
+        document.getElementById('clearUrlList').addEventListener('click', clearUrlList);
+
+        async function fetchPageContent(url, options = {}) {
+            const useProxy = document.getElementById('useProxy').checked;
+            const allowUnsafe = document.getElementById('allowUnsafe').checked;
+            const timeout = parseInt(document.getElementById('timeout').value) * 1000;
+            const maxRetries = parseInt(document.getElementById('maxRetries').value);
+            const userAgentType = document.getElementById('userAgent').value;
+            
+            const fetchOptions = {
+                headers: {
+                    'User-Agent': userAgents[userAgentType] || userAgents.default,
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'ru,en;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate',
+                    'DNT': '1',
+                    'Connection': 'keep-alive',
+                },
+                signal: AbortSignal.timeout(timeout)
+            };
+
+            let lastError = null;
+            
+            if (!useProxy || allowUnsafe) {
+                for (let attempt = 0; attempt < maxRetries; attempt++) {
+                    try {
+                        const response = await fetch(url, fetchOptions);
+                        if (response.ok) {
+                            return await response.text();
+                        }
+                        lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    } catch (error) {
+                        lastError = error;
+                        if (attempt < maxRetries - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                        }
+                    }
+                }
+            }
+
+            if (useProxy) {
+                for (let proxyFn of proxyServices) {
+                    for (let attempt = 0; attempt < maxRetries; attempt++) {
+                        try {
+                            const proxyUrl = proxyFn(url);
+                            const response = await fetch(proxyUrl, fetchOptions);
+                            
+                            if (response.ok) {
+                                const content = await response.text();
+                                if (content && content.length > 100) {
+                                    return content;
+                                }
+                            }
+                            lastError = new Error(`Proxy failed: HTTP ${response.status}`);
+                        } catch (error) {
+                            lastError = error;
+                            if (attempt < maxRetries - 1) {
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                            }
+                        }
+                    }
+                }
+            }
+            
+            throw lastError || new Error('Не удалось загрузить страницу');
+        }
+
+        function searchInText(content, searchText, options) {
+            let text = content;
+            let search = searchText;
+            
+            if (!options.caseSensitive) {
+                text = text.toLowerCase();
+                search = search.toLowerCase();
+            }
+            
+            if (options.wholeWord) {
+                const regex = new RegExp(`\\b${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, options.caseSensitive ? 'g' : 'gi');
+                const matches = text.match(regex);
+                return matches ? matches.length : 0;
+            } else {
+                const matches = text.split(search);
+                return matches.length - 1;
+            }
+        }
+
+        function getContext(content, searchText, options) {
+            if (!options.showContext) return '';
+            
+            let text = content;
+            let search = searchText;
+            const originalSearch = searchText;
+            
+            if (!options.caseSensitive) {
+                text = text.toLowerCase();
+                search = search.toLowerCase();
+            }
+            
+            const contexts = [];
+            let index = text.indexOf(search);
+            let contextCount = 0;
+            
+            while (index !== -1 && contextCount < 3) {
+                const start = Math.max(0, index - 50);
+                const end = Math.min(content.length, index + search.length + 50);
+                
+                let context = content.substring(start, end);
+                context = context.replace(new RegExp(originalSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), options.caseSensitive ? 'g' : 'gi'), 
+                                        `<mark class="bg-yellow-300 px-1">${originalSearch}</mark>`);
+                
+                contexts.push(context);
+                contextCount++;
+                
+                if (!options.checkMultiple) break;
+                index = text.indexOf(search, index + 1);
+            }
+            
+            return contexts.map(ctx => `...${ctx}...`).join('<br><br>');
+        }
+
+        function updateProgress(current, total, currentUrl = '') {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const currentUrlElement = document.getElementById('currentUrl');
+            const timeElapsed = document.getElementById('timeElapsed');
+            const eta = document.getElementById('eta');
+            const speed = document.getElementById('speed');
+            
+            const percentage = (current / total) * 100;
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${current} / ${total}`;
+            currentUrlElement.textContent = currentUrl ? `Проверяется: ${currentUrl}` : '';
+            
+            if (startTime) {
+                const elapsed = Date.now() - startTime;
+                const elapsedSeconds = Math.floor(elapsed / 1000);
+                const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+                timeElapsed.textContent = `${elapsedMinutes.toString().padStart(2, '0')}:${(elapsedSeconds % 60).toString().padStart(2, '0')}`;
+                
+                if (current > 0) {
+                    const avgTimePerUrl = elapsed / current;
+                    const remaining = total - current;
+                    const etaSeconds = Math.floor((remaining * avgTimePerUrl) / 1000);
+                    const etaMinutes = Math.floor(etaSeconds / 60);
+                    eta.textContent = `ETA: ${etaMinutes.toString().padStart(2, '0')}:${(etaSeconds % 60).toString().padStart(2, '0')}`;
+                    
+                    const urlsPerMinute = Math.round((current / elapsed) * 60000);
+                    speed.textContent = `${urlsPerMinute} URL/мин`;
+                }
+            }
+        }
+
+        function updateStats() {
+            const total = checkResults.length;
+            const found = checkResults.filter(r => r.found && r.count > 0).length;
+            const notFound = checkResults.filter(r => !r.error && (!r.found || r.count === 0)).length;
+            const errors = checkResults.filter(r => r.error).length;
+            const successRate = total > 0 ? Math.round(((total - errors) / total) * 100) : 0;
+            
+            document.getElementById('totalChecked').textContent = total;
+            document.getElementById('foundCount').textContent = found;
+            document.getElementById('notFoundCount').textContent = notFound;
+            document.getElementById('errorCount').textContent = errors;
+            document.getElementById('successRate').textContent = `${successRate}%`;
+        }
+
+        function addResultToTable(result, index) {
+            const tbody = document.getElementById('resultsTable');
+            const row = document.createElement('tr');
+            row.dataset.status = result.error ? 'error' : (result.found && result.count > 0 ? 'found' : 'notfound');
+            row.dataset.index = index;
+            
+            let statusHtml, statusClass;
+            if (result.error) {
+                statusHtml = `<i class="fas fa-exclamation-triangle mr-1"></i>Ошибка`;
+                statusClass = 'text-yellow-600 bg-yellow-50';
+            } else if (result.found && result.count > 0) {
+                statusHtml = `<i class="fas fa-check-circle mr-1"></i>Найден`;
+                statusClass = 'text-green-600 bg-green-50';
+            } else {
+                statusHtml = `<i class="fas fa-times-circle mr-1"></i>Не найден`;
+                statusClass = 'text-red-600 bg-red-50';
+            }
+            
+            row.innerHTML = `
+                <td class="border border-gray-300 px-4 py-2 text-center">${index + 1}</td>
+                <td class="border border-gray-300 px-4 py-2">
+                    <a href="${result.url}" target="_blank" class="text-blue-600 hover:underline break-all">
+                        ${result.url}
+                    </a>
+                </td>
+                <td class="border border-gray-300 px-4 py-2">
+                    <span class="px-2 py-1 rounded-full text-xs ${statusClass}">
+                        ${statusHtml}
+                    </span>
+                    ${result.error ? `<div class="text-xs text-gray-500 mt-1">${result.error}</div>` : ''}
+                </td>
+                <td class="border border-gray-300 px-4 py-2 text-center">
+                    ${result.error ? '-' : result.count}
+                </td>
+                <td class="border border-gray-300 px-4 py-2 text-center">
+                    ${result.responseTime ? `${result.responseTime}мс` : '-'}
+                </td>
+                <td class="border border-gray-300 px-4 py-2 text-sm">
+                    <div class="max-w-xs overflow-hidden" style="max-height: 100px; overflow-y: auto;">
+                        ${result.context || '-'}
+                    </div>
+                </td>
+                <td class="border border-gray-300 px-4 py-2 text-center">
+                    <button onclick="recheckUrl(${index})" class="text-blue-600 hover:text-blue-800 text-sm px-2 py-1" title="Перепроверить">
+                        <i class="fas fa-redo mr-1"></i>Проверить
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            applyFilter();
+        }
+
+        function applyFilter() {
+            const rows = document.querySelectorAll('#resultsTable tr');
+            rows.forEach(row => {
+                const status = row.dataset.status;
+                if (currentFilter === 'all' || 
+                    (currentFilter === 'found' && status === 'found') ||
+                    (currentFilter === 'notfound' && status === 'notfound') ||
+                    (currentFilter === 'error' && status === 'error')) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        async function recheckUrl(index) {
+            if (index < 0 || index >= checkResults.length) {
+                console.error('Неверный индекс:', index);
+                return;
+            }
+            
+            const result = checkResults[index];
+            const searchText = document.getElementById('searchText').value.trim();
+            
+            if (!searchText) {
+                alert('Введите текст для поиска');
+                return;
+            }
+            
+            const options = {
+                caseSensitive: document.getElementById('caseSensitive').checked,
+                wholeWord: document.getElementById('wholeWord').checked,
+                showContext: document.getElementById('showContext').checked,
+                checkMultiple: document.getElementById('checkMultiple').checked
+            };
+
+            const row = document.querySelector(`#resultsTable tr[data-index="${index}"]`);
+            if (row) {
+                row.style.opacity = '0.5';
+            }
+
+            try {
+                const startTime = Date.now();
+                const content = await fetchPageContent(result.url);
+                const responseTime = Date.now() - startTime;
+                const count = searchInText(content, searchText, options);
+                const context = count > 0 ? getContext(content, searchText, options) : '';
+                
+                checkResults[index] = {
+                    ...result,
+                    found: count > 0,
+                    count: count,
+                    context: context,
+                    error: null,
+                    responseTime: responseTime,
+                    timestamp: new Date().toISOString()
+                };
+                
+            } catch (error) {
+                checkResults[index] = {
+                    ...result,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                };
+            }
+            
+            if (row) {
+                const tbody = document.getElementById('resultsTable');
+                tbody.removeChild(row);
+            }
+            addResultToTable(checkResults[index], index);
+            updateStats();
+        }
+
+        async function checkWebsites() {
+            const urlList = document.getElementById('urlList').value.trim();
+            const searchText = document.getElementById('searchText').value.trim();
+            
+            if (!urlList || !searchText) {
+                alert('Пожалуйста, заполните все поля');
+                return;
+            }
+            
+            const urls = urlList.split('\n').map(url => url.trim()).filter(url => url);
+            if (urls.length === 0) {
+                alert('Введите хотя бы один URL');
+                return;
+            }
+            
+            const options = {
+                caseSensitive: document.getElementById('caseSensitive').checked,
+                wholeWord: document.getElementById('wholeWord').checked,
+                showContext: document.getElementById('showContext').checked,
+                checkMultiple: document.getElementById('checkMultiple').checked
+            };
+            
+            const delay = parseInt(document.getElementById('delay').value);
+            
+            checkResults = [];
+            isPaused = false;
+            isStopped = false;
+            startTime = Date.now();
+            
+            const progressContainer = document.getElementById('progressContainer');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const tbody = document.getElementById('resultsTable');
+            const startButton = document.getElementById('startCheck');
+            const pauseButton = document.getElementById('pauseCheck');
+            const stopButton = document.getElementById('stopCheck');
+            
+            progressContainer.classList.remove('hidden');
+            resultsContainer.classList.remove('hidden');
+            tbody.innerHTML = '';
+            
+            startButton.classList.add('hidden');
+            pauseButton.classList.remove('hidden');
+            stopButton.classList.remove('hidden');
+            
+            for (let i = 0; i < urls.length && !isStopped; i++) {
+                while (isPaused && !isStopped) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                if (isStopped) break;
+                
+                const url = urls[i];
+                updateProgress(i, urls.length, url);
+                
+                try {
+                    const requestStart = Date.now();
+                    const content = await fetchPageContent(url);
+                    const responseTime = Date.now() - requestStart;
+                    const count = searchInText(content, searchText, options);
+                    const context = count > 0 ? getContext(content, searchText, options) : '';
+                    
+                    const result = {
+                        url: url,
+                        found: count > 0,
+                        count: count,
+                        context: context,
+                        error: null,
+                        responseTime: responseTime,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    checkResults.push(result);
+                    addResultToTable(result, checkResults.length - 1);
+                    
+                } catch (error) {
+                    const result = {
+                        url: url,
+                        found: false,
+                        count: 0,
+                        context: '',
+                        error: error.message,
+                        responseTime: null,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    checkResults.push(result);
+                    addResultToTable(result, checkResults.length - 1);
+                }
+                
+                updateStats();
+                
+                if (i < urls.length - 1 && !isStopped) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+            
+            updateProgress(urls.length, urls.length);
+            
+            startButton.classList.remove('hidden');
+            pauseButton.classList.add('hidden');
+            stopButton.classList.add('hidden');
+            
+            startButton.innerHTML = '<i class="fas fa-play mr-2"></i>Начать проверку';
+        }
+
+        function exportToCsv() {
+            const headers = ['№', 'URL', 'Статус', 'Количество', 'Время ответа', 'Контекст', 'Ошибка', 'Время проверки'];
+            const csvContent = [
+                headers.join(','),
+                ...checkResults.map((result, index) => [
+                    index + 1,
+                    `"${result.url}"`,
+                    result.error ? 'Ошибка' : (result.found ? 'Найден' : 'Не найден'),
+                    result.count,
+                    result.responseTime || '',
+                    `"${(result.context || '').replace(/"/g, '""').replace(/<[^>]*>/g, '')}"`,
+                    `"${result.error || ''}"`,
+                    `"${result.timestamp || ''}"`
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `backlink_check_results_${new Date().getTime()}.csv`;
+            link.click();
+        }
+
+        function exportToJson() {
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                searchText: document.getElementById('searchText').value,
+                settings: {
+                    useProxy: document.getElementById('useProxy').checked,
+                    allowUnsafe: document.getElementById('allowUnsafe').checked,
+                    caseSensitive: document.getElementById('caseSensitive').checked,
+                    wholeWord: document.getElementById('wholeWord').checked,
+                    showContext: document.getElementById('showContext').checked,
+                    timeout: document.getElementById('timeout').value,
+                    delay: document.getElementById('delay').value,
+                    userAgent: document.getElementById('userAgent').value
+                },
+                results: checkResults
+            };
+            
+            const jsonContent = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonContent], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `backlink_check_results_${new Date().getTime()}.json`;
+            link.click();
+        }
+
+        function clearResults() {
+            if (confirm('Вы уверены, что хотите очистить результаты?')) {
+                checkResults = [];
+                document.getElementById('resultsTable').innerHTML = '';
+                document.getElementById('resultsContainer').classList.add('hidden');
+                document.getElementById('progressContainer').classList.add('hidden');
+                updateStats();
+            }
+        }
+
+        // Получение настроек для экспорта
+        function getSettings() {
+            return {
+                useProxy: document.getElementById('useProxy').checked,
+                allowUnsafe: document.getElementById('allowUnsafe').checked,
+                caseSensitive: document.getElementById('caseSensitive').checked,
+                wholeWord: document.getElementById('wholeWord').checked,
+                showContext: document.getElementById('showContext').checked,
+                timeout: document.getElementById('timeout').value,
+                delay: document.getElementById('delay').value,
+                userAgent: document.getElementById('userAgent').value,
+                maxRetries: document.getElementById('maxRetries').value
+            };
+        }
+
+        // Event listeners
+        document.getElementById('startCheck').addEventListener('click', checkWebsites);
+        
+        document.getElementById('pauseCheck').addEventListener('click', () => {
+            isPaused = !isPaused;
+            const button = document.getElementById('pauseCheck');
+            if (isPaused) {
+                button.innerHTML = '<i class="fas fa-play"></i>';
+                button.title = 'Продолжить проверку';
+            } else {
+                button.innerHTML = '<i class="fas fa-pause"></i>';
+                button.title = 'Приостановить проверку';
+            }
+        });
+        
+        document.getElementById('stopCheck').addEventListener('click', () => {
+            isStopped = true;
+            document.getElementById('startCheck').classList.remove('hidden');
+            document.getElementById('pauseCheck').classList.add('hidden');
+            document.getElementById('stopCheck').classList.add('hidden');
+        });
+
+        // Filter buttons
+        document.getElementById('filterFound').addEventListener('click', () => {
+            currentFilter = 'found';
+            applyFilter();
+        });
+        
+        document.getElementById('filterNotFound').addEventListener('click', () => {
+            currentFilter = 'notfound';
+            applyFilter();
+        });
+        
+        document.getElementById('filterAll').addEventListener('click', () => {
+            currentFilter = 'all';
+            applyFilter();
+        });
+
+        // Export buttons
+        document.getElementById('exportTxt').addEventListener('click', () => {
+            if (checkResults.length === 0) {
+                alert('Нет результатов для экспорта');
+                return;
+            }
+            const searchText = document.getElementById('searchText').value;
+            const settings = getSettings();
+            exportToTxt(checkResults, searchText, settings);
+        });
+
+        document.getElementById('exportExcel').addEventListener('click', () => {
+            if (checkResults.length === 0) {
+                alert('Нет результатов для экспорта');
+                return;
+            }
+            const searchText = document.getElementById('searchText').value;
+            const settings = getSettings();
+            exportToExcel(checkResults, searchText, settings);
+        });
+
+        document.getElementById('exportRtf').addEventListener('click', () => {
+            if (checkResults.length === 0) {
+                alert('Нет результатов для экспорта');
+                return;
+            }
+            const searchText = document.getElementById('searchText').value;
+            const settings = getSettings();
+            exportToRtf(checkResults, searchText, settings);
+        });
+
+        document.getElementById('exportCsv').addEventListener('click', exportToCsv);
+        document.getElementById('exportJson').addEventListener('click', exportToJson);
+        document.getElementById('clearResults').addEventListener('click', clearResults);
+
+        // Initialize
+        updateStats();
+        updateUrlCount();
+    </script>
+</body>
+</html>

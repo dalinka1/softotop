@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Играть в игры — Softo.top</title>
+  <link rel="stylesheet" href="/menu/menu.css">
+  <script src="/menu/menu.js" defer></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fceef3; /* постельный розоватый фон */
+      color: #333;
+    }
+
+    header {
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      padding: 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      color: #444;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+      padding: 60px 20px;
+      min-height: calc(100vh - 160px);
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      overflow: hidden;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.6s ease;
+      padding: 40px 30px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card h2 {
+      color: #222;
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+
+    .card p {
+      color: #555;
+      font-size: 16px;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    .btn {
+      background-color: #307ac2;
+      color: #fff;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      display: inline-block;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn:hover {
+      background-color: #25619b;
+      transform: translateY(-2px);
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Играть в игры — Softo.top</h1>
+  </header>
+
+  <div class="container">
+    <div class="card" id="chess-card">
+      <h2>Chess</h2>
+      <p>Погрузитесь в мир классических шахмат. Стратегия, терпение и внимание — всё, что нужно для интеллектуального отдыха.</p>
+      <a href="/relaxation/games/chess/index.html" class="btn">Играть сейчас</a>
+    </div>
+
+    <div class="card" id="psychic-card">
+      <h2>Развитие экстрасенсорных способностей</h2>
+      <p>Проверьте свою интуицию и способность чувствовать скрытые сигналы. Упражнения для концентрации и внутреннего восприятия.</p>
+      <a href="/relaxation/games/clairvoyant/index.html" class="btn">Попробовать</a>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 Softo.top — интеллектуальный отдых онлайн
+  </footer>
+
+  <script>
+    window.addEventListener('load', () => {
+      const cards = document.querySelectorAll('.card');
+      cards.forEach((card, i) => {
+        setTimeout(() => card.classList.add('visible'), 200 * i);
+      });
+    });
+  </script>
+
+</body>
+</html>

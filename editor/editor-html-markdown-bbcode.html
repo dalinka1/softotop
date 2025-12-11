@@ -1,0 +1,2035 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Визуальный Редактор - конвертирует текст в html, Markdown и Bb код</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+     <link rel="stylesheet" href="/menu/menu.css">
+  <script src="/menu/menu.js" defer></script>
+ <style>
+        .editor-content img {
+            max-width: 100%;
+            height: auto;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .editor-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+        }
+        .editor-content th,
+        .editor-content td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .editor-content th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .editor-content a {
+            color: #2563eb;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .inline-link {
+            color: #2563eb !important;
+            text-decoration: underline !important;
+            cursor: pointer !important;
+            border: 1px dashed #6b7280;
+            padding: 0 3px;
+            border-radius: 3px;
+        }
+        .output-code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .tab-active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .tab-inactive {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+        .format-toolbar {
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .toolbar-group {
+            display: flex;
+            gap: 3px;
+            padding: 0 8px;
+            border-right: 1px solid #dee2e6;
+            align-items: center;
+        }
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+        .toolbar-label {
+            font-size: 11px;
+            color: #6c757d;
+            margin-bottom: 2px;
+            font-weight: 500;
+        }
+        .format-btn {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .format-btn:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .format-btn.active {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border-color: #0056b3;
+            box-shadow: 0 2px 6px rgba(0,123,255,0.3);
+        }
+        #editor {
+            border-radius: 0 0 8px 8px !important;
+            border-top: none !important;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        #editor:focus {
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .format-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 180px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+        .dropdown-content a {
+            color: #495057;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-size: 14px;
+        }
+        .dropdown-content a:hover {
+            background-color: #f8f9fa;
+        }
+        .format-dropdown:hover .dropdown-content {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stats-bar {
+            padding: 8px 15px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            font-size: 12px;
+            color: #6c757d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Стили для модального окна */
+        #code-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 600px;
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 15px 20px;
+            background: #3b82f6;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .code-input {
+            width: 100%;
+            height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .modal-footer {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .modal-btn {
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .insert-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+        }
+        .insert-btn:hover {
+            background: #2563eb;
+        }
+        .cancel-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #64748b;
+        }
+        .cancel-btn:hover {
+            background: #e2e8f0;
+        }
+        
+        /* Усиленные стили для заголовков в редакторе */
+        #editor h1 {
+            font-size: 25.5pt !important;
+            font-weight: bold !important;
+            display: block;
+            margin: 20px 0 10px 0 !important;
+            line-height: 1.3 !important;
+        }
+        #editor h2 {
+            font-size: 17.5pt !important;
+            font-weight: bold !important;
+            display: block;
+            margin: 18px 0 9px 0 !important;
+            line-height: 1.35 !important;
+        }
+        #editor h3 {
+            font-size: 15pt !important;
+            font-weight: bold !important;
+            display: block;
+            margin: 16px 0 8px 0 !important;
+            line-height: 1.4 !important;
+        }
+        
+        /* Принудительные стили для размеров текста */
+        .text-25pt { font-size: 25.5pt !important; }
+        .text-17pt { font-size: 17.5pt !important; }
+        .text-15pt { font-size: 15pt !important; }
+        
+        /* Исправленные стили для списков в редакторе */
+        #editor ul, #editor ol {
+            padding-left: 30px !important;
+            margin: 10px 0 !important;
+            display: block !important;
+        }
+
+        #editor li {
+            margin: 5px 0 !important;
+            display: list-item !important;
+            padding-left: 5px !important;
+        }
+
+        #editor ul li {
+            list-style-type: disc !important;
+        }
+
+        #editor ol li {
+            list-style-type: decimal !important;
+        }
+
+        /* Обеспечиваем правильное отображение вложенных списков */
+        #editor ul ul, #editor ol ol, #editor ul ol, #editor ol ul {
+            margin: 5px 0 !important;
+            padding-left: 20px !important;
+        }
+        
+        /* Убираем лишние отступы у первого и последнего элемента списка */
+        #editor li:first-child {
+            margin-top: 0 !important;
+        }
+        
+        #editor li:last-child {
+            margin-bottom: 0 !important;
+        }
+        
+        /* Улучшенные стили для изображений */
+        #editor img {
+            max-width: 100% !important;
+            height: auto !important;
+            margin: 10px 0 !important;
+            display: inline-block !important;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 3px;
+            background-color: #fff;
+        }
+
+        /* Исправление проблемы с отображением BB-кода */
+        #editor .bb-code-content {
+            white-space: pre-wrap;
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            color: inherit;
+        }
+
+        /* Сохраняем оригинальную структуру при преобразовании BB-кода */
+        #editor .bb-line {
+            display: block;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen py-6">
+    <div class="container mx-auto px-4 max-w-7xl">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-edit mr-3 text-blue-500"></i>Визуальный Редактор конвертирует текст в html, Markdown и Bb            </h1>
+            <p class="text-gray-600">Профессиональный инструмент для работы с текстом и конвертации в html, Markdown и Bb код</p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Редактор -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-pencil-alt mr-2 text-blue-500"></i>Редактор
+                    </h2>
+                    <div class="flex gap-2">
+                        <button onclick="selectAllText()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-300 text-sm" title="Выделить весь текст">
+                            <i class="fas fa-mouse-pointer mr-2"></i>Выбрать все
+                        </button>
+                        <button onclick="clearEditor()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-300 text-sm" title="Очистить редактор">
+                            <i class="fas fa-trash mr-2"></i>Очистить
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Улучшенная панель форматирования -->
+                <div class="format-toolbar">
+                    <!-- Группа: Заголовки -->
+                    <div class="toolbar-group">
+                        <div>
+                            <div class="toolbar-label">Заголовки</div>
+                            <div class="format-dropdown">
+                                <button class="format-btn" title="Выбрать заголовок">
+                                    <i class="fas fa-heading"></i>
+                                    <i class="fas fa-caret-down ml-1"></i>
+                                </button>
+                                <div class="dropdown-content">
+                                    <a onclick="formatText('formatBlock', 'h1')"><strong>Заголовок 1</strong></a>
+                                    <a onclick="formatText('formatBlock', 'h2')"><strong>Заголовок 2</strong></a>
+                                    <a onclick="formatText('formatBlock', 'h3')"><strong>Заголовок 3</strong></a>
+                                    <a onclick="formatText('formatBlock', 'h4')">Заголовок 4</a>
+                                    <a onclick="formatText('formatBlock', 'h5')">Заголовок 5</a>
+                                    <a onclick="formatText('formatBlock', 'h6')">Заголовок 6</a>
+                                    <a onclick="formatText('formatBlock', 'p')">Обычный текст</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Группа: Форматирование -->
+                    <div class="toolbar-group">
+                        <div>
+                            <div class="toolbar-label">Текст</div>
+                            <div class="flex gap-1">
+                                <button class="format-btn" onclick="formatText('bold')" title="Жирный текст">
+                                    <i class="fas fa-bold"></i>
+                                </button>
+                                <button class="format-btn" onclick="formatText('italic')" title="Курсивный текст">
+                                    <i class="fas fa-italic"></i>
+                                </button>
+                                <button class="format-btn" onclick="formatText('underline')" title="Подчеркнутый текст">
+                                    <i class="fas fa-underline"></i>
+                                </button>
+                                <button class="format-btn" onclick="formatText('strikeThrough')" title="Зачеркнутый текст">
+                                    <i class="fas fa-strikethrough"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Группа: Списки -->
+                    <div class="toolbar-group">
+                        <div>
+                            <div class="toolbar-label">Списки</div>
+                            <div class="flex gap-1">
+                                <button class="format-btn" onclick="formatText('insertUnorderedList')" title="Маркированный список">
+                                    <i class="fas fa-list-ul"></i>
+                                </button>
+                                <button class="format-btn" onclick="formatText('insertOrderedList')" title="Нумерованный список">
+                                    <i class="fas fa-list-ol"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Группа: Выравнивание -->
+                    <div class="toolbar-group">
+                        <div>
+                            <div class="toolbar-label">Выравнивание</div>
+                            <div class="flex gap-1">
+                                <button class="format-btn" onclick="formatText('justifyLeft')" title="По левому краю">
+                                    <i class="fas fa-align-left"></i>
+                                </button>
+                                <button class="format-btn" onclick="formatText('justifyCenter')" title="По центру">
+                                    <i class="fas fa-align-center"></i>
+                                </button>
+                                <button class="format-btn" onclick="formatText('justifyRight')" title="По правому краю">
+                                    <i class="fas fa-align-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Группа: Вставка -->
+                    <div class="toolbar-group">
+                        <div>
+                            <div class="toolbar-label">Вставка</div>
+                            <div class="flex gap-1">
+                                <button class="format-btn" onclick="insertLink()" title="Вставить ссылку">
+                                    <i class="fas fa-link"></i>
+                                </button>
+                                <button class="format-btn" onclick="insertImage()" title="Вставить изображение">
+                                    <i class="fas fa-image"></i>
+                                </button>
+                                <button class="format-btn" onclick="insertTable()" title="Вставить таблицу">
+                                    <i class="fas fa-table"></i>
+                                </button>
+                                <!-- Новые кнопки вставки -->
+                                <button class="format-btn" onclick="openCodeModal('bb')" title="Вставить BB-код">
+                                    <i class="fas fa-brackets-square"></i> BB
+                                </button>
+                                <button class="format-btn" onclick="openCodeModal('html')" title="Вставить HTML">
+                                    <i class="fas fa-code"></i> HTML
+                                </button>
+                                <button class="format-btn" onclick="openCodeModal('markdown')" title="Вставить Markdown">
+                                    <i class="fab fa-markdown"></i> MD
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Группа: Цвета -->
+                    <div class="toolbar-group">
+                        <div>
+                            <div class="toolbar-label">Цвета</div>
+                            <div class="flex gap-1">
+                                <input type="color" class="format-btn" onchange="formatText('foreColor', this.value)" title="Цвет текста" style="width: 36px; height: 36px; padding: 2px;">
+                                <input type="color" class="format-btn" onchange="formatText('backColor', this.value)" title="Цвет фона" style="width: 36px; height: 36px; padding: 2px;" value="#ffffff">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <div id="editor" class="w-full h-80 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-y-auto editor-content" contenteditable="true" placeholder="Начните печатать или вставьте текст..."></div>
+                </div>
+                
+                <!-- Панель статистики -->
+                <div class="stats-bar">
+                    <div class="flex gap-4">
+                        <span>Символов: <strong id="char-count">0</strong></span>
+                        <span>Слов: <strong id="word-count">0</strong></span>
+                        <span>Абзацев: <strong id="paragraph-count">0</strong></span>
+                    </div>
+                    <div id="last-action" class="text-blue-600 font-medium"></div>
+                </div>
+                
+                <div class="p-6 bg-gray-50 text-sm text-gray-600">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="font-semibold mb-2"><i class="fas fa-info-circle mr-1 text-blue-500"></i>Поддерживаемые форматы:</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Стилизованный текст из Google Документов</li>
+                                <li>HTML код с тегами</li>
+                                <li>BB-коды и Markdown</li>
+                                <li>Автоматическое определение заголовков по размеру</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="font-semibold mb-2"><i class="fas fa-keyboard mr-1 text-green-500"></i>Размеры заголовков:</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>25.5pt = H1</li>
+                                <li>17.5pt = H2</li>
+                                <li>15pt = H3</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Результаты -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6 bg-gradient-to-r from-green-50 to-teal-50 border-b">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-code mr-2 text-green-500"></i>Результаты конвертации
+                    </h2>
+                </div>
+                
+                <!-- Улучшенные вкладки -->
+                <div class="flex border-b bg-gray-50">
+                    <button class="tab-btn px-6 py-3 tab-active font-medium transition-all duration-300" onclick="showTab('html')">
+                        <i class="fas fa-code mr-2"></i>HTML
+                    </button>
+                    <button class="tab-btn px-6 py-3 tab-inactive font-medium transition-all duration-300" onclick="showTab('bb')">
+                        <i class="fas fa-brackets-square mr-2"></i>BB-код
+                    </button>
+                    <button class="tab-btn px-6 py-3 tab-inactive font-medium transition-all duration-300" onclick="showTab('markdown')">
+                        <i class="fab fa-markdown mr-2"></i>Markdown
+                    </button>
+                </div>
+
+                <!-- Контент вкладок -->
+                <div class="tab-content p-6">
+                    <!-- HTML вкладка -->
+                    <div id="html-tab" class="tab-pane">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-lg font-medium text-gray-700">
+                                <i class="fas fa-code mr-2 text-orange-500"></i>Чистый HTML код:
+                            </span>
+                            <button onclick="copyToClipboard('html-output')" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-300 pulse-animation">
+                                <i class="fas fa-copy mr-2"></i>Копировать
+                            </button>
+                        </div>
+                        <textarea id="html-output" class="w-full h-72 p-4 border border-gray-300 rounded-lg output-code resize-none bg-gray-50 focus:bg-white transition-colors duration-300" readonly></textarea>
+                    </div>
+
+                    <!-- BB-код вкладка -->
+                    <div id="bb-tab" class="tab-pane hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-lg font-medium text-gray-700">
+                                <i class="fas fa-brackets-square mr-2 text-purple-500"></i>BB-код:
+                            </span>
+                            <button onclick="copyToClipboard('bb-output')" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-300">
+                                <i class="fas fa-copy mr-2"></i>Копировать
+                            </button>
+                        </div>
+                        <textarea id="bb-output" class="w-full h-72 p-4 border border-gray-300 rounded-lg output-code resize-none bg-gray-50 focus:bg-white transition-colors duration-300" readonly></textarea>
+                    </div>
+
+                    <!-- Markdown вкладка -->
+                    <div id="markdown-tab" class="tab-pane hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-lg font-medium text-gray-700">
+                                <i class="fab fa-markdown mr-2 text-blue-500"></i>Markdown:
+                            </span>
+                            <button onclick="copyToClipboard('markdown-output')" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-300">
+                                <i class="fas fa-copy mr-2"></i>Копировать
+                            </button>
+                        </div>
+                        <textarea id="markdown-output" class="w-full h-72 p-4 border border-gray-300 rounded-lg output-code resize-none bg-gray-50 focus:bg-white transition-colors duration-300" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для вставки кода -->
+    <div id="code-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Вставка кода</h3>
+                <button class="modal-close" onclick="closeCodeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="code-input" class="code-input" placeholder="Вставьте ваш код здесь..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel-btn" onclick="closeCodeModal()">Отмена</button>
+                <button class="modal-btn insert-btn" onclick="insertCode()">Вставить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'html';
+        let currentCodeType = '';
+
+        // Функция удаления фрагментов и лишних тегов
+        function removeFragments(html) {
+            // Удаляем все варианты комментариев StartFragment и EndFragment
+            html = html.replace(/<!--\s*StartFragment\s*-->/gi, '');
+            html = html.replace(/<!--\s*EndFragment\s*-->/gi, '');
+            
+            // Удаляем теги <b> в начале и конце
+            html = html.replace(/^<b>|<\/b>$/gi, '');
+            
+            // Удаляем последовательности </b><br> в конце контента
+            html = html.replace(/<\/b>\s*<br\s*\/?>\s*$/gi, '');
+            html = html.replace(/<\/b>\s*<br\s*\/?>\s*<\/p>\s*$/gi, '');
+            
+            // Удаляем пустые теги в конце
+            html = html.replace(/<br\s*\/?>\s*$/gi, '');
+            html = html.replace(/<p><\/p>\s*$/gi, '');
+            html = html.replace(/<div><\/div>\s*$/gi, '');
+            
+            return html;
+        }
+        
+        // Функция преобразования стилей в семантические теги (пропускает заголовки)
+        function convertSpansToSemanticTags(element) {
+            const spans = element.querySelectorAll('span');
+            
+            spans.forEach(span => {
+                // Пропускаем span внутри заголовков
+                if (span.closest('h1, h2, h3, h4, h5, h6')) {
+                    return;
+                }
+                
+                const style = span.style;
+                const fontWeight = style.fontWeight;
+                const fontStyle = style.fontStyle;
+                let replacement = null;
+                
+                // Обработка жирного текста
+                if (fontWeight === '700' || fontWeight === 'bold' || fontWeight === '800' || fontWeight === '900') {
+                    replacement = document.createElement('b');
+                }
+                
+                // Обработка курсива
+                if (fontStyle === 'italic' || fontStyle === 'oblique') {
+                    if (replacement) {
+                        // Если уже есть жирный, добавляем внутрь курсив
+                        const italic = document.createElement('i');
+                        while (replacement.firstChild) {
+                            italic.appendChild(replacement.firstChild);
+                        }
+                        replacement.appendChild(italic);
+                    } else {
+                        replacement = document.createElement('i');
+                    }
+                }
+                
+                if (replacement) {
+                    // Сохраняем текст и дочерние элементы
+                    replacement.innerHTML = span.innerHTML;
+                    
+                    // Переносим классы и атрибуты
+                    Array.from(span.attributes).forEach(attr => {
+                        if (attr.name !== 'style') {
+                            replacement.setAttribute(attr.name, attr.value);
+                        }
+                    });
+                    
+                    // Заменяем span новым элементом
+                    span.parentNode.replaceChild(replacement, span);
+                }
+            });
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            const editor = document.getElementById('editor');
+            
+            editor.addEventListener('input', function() {
+                processLinksAndImages(); 
+                updateStats();
+                convertContent();
+                showAction('Текст изменен');
+            });
+
+            // Улучшенный обработчик вставки для сохранения размеров
+            editor.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/html');
+                
+                if (text) {
+                    // Очищаем от фрагментов перед обработкой
+                    const cleanedText = removeFragments(text);
+                    
+                    // Создаем временный контейнер
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = cleanedText;
+                    
+                    // Сохраняем размеры текста и обрабатываем заголовки
+                    function processPastedContent(element) {
+                        const children = Array.from(element.children);
+                        children.forEach(child => {
+                            // Сохраняем размеры текста
+                            const fontSizePt = getFontSizeInPt(child);
+                            if (fontSizePt) {
+                                if (Math.abs(fontSizePt - 25.5) <= 0.5) {
+                                    child.classList.add('text-25pt');
+                                } else if (Math.abs(fontSizePt - 17.5) <= 0.5) {
+                                    child.classList.add('text-17pt');
+                                } else if (Math.abs(fontSizePt - 15) <= 0.5) {
+                                    child.classList.add('text-15pt');
+                                }
+                            }
+                            
+                            // Обрабатываем заголовки
+                            const headerType = analyzeElementForHeaders(child);
+                            if (headerType) {
+                                const header = document.createElement(headerType);
+                                header.innerHTML = child.innerHTML;
+                                
+                                // Переносим классы
+                                Array.from(child.classList).forEach(cls => {
+                                    header.classList.add(cls);
+                                });
+                                
+                                // Переносим атрибуты (кроме стилей)
+                                Array.from(child.attributes).forEach(attr => {
+                                    if (attr.name !== 'style') {
+                                        header.setAttribute(attr.name, attr.value);
+                                    }
+                                });
+                                
+                                child.replaceWith(header);
+                            } else if (child.children.length > 0) {
+                                processPastedContent(child);
+                            }
+                        });
+                    }
+                    
+                    processPastedContent(tempDiv);
+                    
+                    // Вставляем обработанный контент
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        range.deleteContents();
+                        
+                        const docFragment = document.createDocumentFragment();
+                        while (tempDiv.firstChild) {
+                            docFragment.appendChild(tempDiv.firstChild);
+                        }
+                        
+                        range.insertNode(docFragment);
+                        range.collapse(false);
+                    }
+                }
+                
+                showAction('Контент вставлен');
+                setTimeout(() => {
+                    processLinksAndImages(); 
+                    updateStats();
+                    convertContent();
+                }, 10);
+            });
+
+            // Обработка горячих клавиш
+            editor.addEventListener('keydown', function(e) {
+                if (e.ctrlKey) {
+                    switch(e.key) {
+                        case 'b':
+                            e.preventDefault();
+                            formatText('bold');
+                            break;
+                        case 'i':
+                            e.preventDefault();
+                            formatText('italic');
+                            break;
+                        case 'u':
+                            e.preventDefault();
+                            formatText('underline');
+                            break;
+                    }
+                }
+ // Добавляем обработку Alt+цифра для заголовков
+    if (e.altKey && !isNaN(parseInt(e.key)) && parseInt(e.key) >= 1 && parseInt(e.key) <= 6) {
+        e.preventDefault();
+        formatText('formatBlock', 'h' + e.key);
+        showAction('Применен заголовок H' + e.key);
+    }
+            });
+
+            // Первичное обновление статистики
+            updateStats();
+            
+            // Закрытие модального окна при клике вне его области
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('code-modal');
+                if (event.target === modal) {
+                    closeCodeModal();
+                }
+            });
+            
+            // Закрытие модального окна при нажатии Esc
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeCodeModal();
+                }
+            });
+        });
+
+        // Функция для получения первого заголовка из контента
+        function getFirstHeading(content) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            
+            // Проверяем все уровни заголовков от h1 до h6
+            for (let i = 1; i <= 6; i++) {
+                const header = tempDiv.querySelector(`h${i}`);
+                if (header && header.textContent.trim()) {
+                    return header.textContent.trim();
+                }
+            }
+            
+            // Если заголовка нет, ищем первый жирный текст
+            const bold = tempDiv.querySelector('b, strong');
+            if (bold && bold.textContent.trim()) {
+                return bold.textContent.trim();
+            }
+            
+            return null;
+        }
+
+        // Улучшенная обработка ссылок и изображений
+        function processLinksAndImages() {
+            const editor = document.getElementById('editor');
+            let content = editor.innerHTML;
+            const firstHeading = getFirstHeading(content);
+            
+            // Создаем временный div для манипуляций
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            
+            // Обрабатываем HTML-теги с атрибутами
+            // Преобразование HTML-тегов (которые отображаются как текст)
+            content = content.replace(/&lt;a\s+href="([^"]+)"&gt;(.*?)&lt;\/a&gt;/gi, '<a href="$1">$2</a>');
+            
+            // Исправленная обработка img тегов с атрибутами alt и title
+            content = content.replace(/&lt;img\s+src="([^"]+)"(?:\s+alt="([^"]*)")?(?:\s+title="([^"]*)")?\s*(?:\/)?&gt;/gi, 
+                function(match, src, alt, title) {
+                    let result = '<img src="' + src + '"';
+                    if (alt) result += ' alt="' + alt + '"';
+                    if (title) result += ' title="' + title + '"';
+                    result += '>';
+                    return result;
+                }
+            );
+            
+            // Проверка на непреобразованные теги img с атрибутами alt и title
+            content = content.replace(/<img\s+src="([^"]+)"(?:\s+alt="([^"]*)")?(?:\s+title="([^"]*)")?\s*(?:\/)?>/gi,
+                function(match, src, alt, title) {
+                    let result = '<img src="' + src + '"';
+                    if (alt) result += ' alt="' + alt + '"';
+                    if (title) result += ' title="' + title + '"';
+                    result += '>';
+                    return result;
+                }
+            );
+            
+            // Преобразование Markdown ссылок и изображений с сохранением alt текста
+            content = content.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/gi, '<a href="$1">$2</a>');
+            content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/gi, '<a href="$2">$1</a>');
+            content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/gi, '<img src="$2" alt="$1">');
+            
+            // Преобразование BB-кода изображений с сохранением alt текста
+            content = content.replace(/\[img=([^\]]+)\](.*?)\[\/img\]/gi, '<img src="$1" alt="$2">');
+            
+            // Обработка [img]ссылка[/img] с использованием заголовка как alt
+            content = content.replace(/\[img\](.*?)\[\/img\]/gi, function(match, url) {
+                return '<img src="' + url + '"' + (firstHeading ? ' alt="' + firstHeading + '"' : '') + '>';
+            });
+            
+            // Найти все текстовые узлы, которые могут содержать непреобразованные теги
+            tempDiv.innerHTML = content;
+            const textNodes = [];
+            const walk = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null, false);
+            
+            while (walk.nextNode()) {
+                textNodes.push(walk.currentNode);
+            }
+            
+            textNodes.forEach(textNode => {
+                let nodeValue = textNode.nodeValue;
+                
+                // Преобразование тегов <a> и <img> в настоящие HTML-элементы
+                const hasLinkTag = /<a\s+href="[^"]*"[^>]*>.*?<\/a>/gi.test(nodeValue);
+                const hasImgTag = /<img\s+src="[^"]*"[^>]*>/gi.test(nodeValue);
+                
+                if (hasLinkTag || hasImgTag) {
+                    const tempEl = document.createElement('div');
+                    tempEl.innerHTML = nodeValue;
+                    
+                    // Заменяем текстовый узел на HTML-элементы
+                    const fragment = document.createDocumentFragment();
+                    while (tempEl.firstChild) {
+                        fragment.appendChild(tempEl.firstChild);
+                    }
+                    
+                    textNode.parentNode.replaceChild(fragment, textNode);
+                }
+            });
+            
+            // Добавляем проверку и обработку всех изображений
+            const images = tempDiv.querySelectorAll('img');
+            images.forEach(img => {
+                // Проверка загрузки изображений
+                if (!img.getAttribute('onerror')) {
+                    img.setAttribute('onerror', "this.style.border='1px dashed red'; this.style.padding='5px'; this.alt='Изображение недоступно';");
+                }
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                img.style.display = 'inline-block';
+                img.style.margin = '10px 0';
+            });
+            
+            editor.innerHTML = tempDiv.innerHTML;
+            
+            // Добавляем обработку span-элементов (пропуская заголовки)
+            const editorDiv = document.createElement('div');
+            editorDiv.innerHTML = editor.innerHTML;
+            convertSpansToSemanticTags(editorDiv);
+            editor.innerHTML = editorDiv.innerHTML;
+        }
+
+        // Улучшенная функция определения размера шрифта в пунктах
+        function getFontSizeInPt(element) {
+            // 1. Проверяем явно указанные стили
+            const style = element.getAttribute('style') || '';
+            const fontSizeMatch = style.match(/font-size:\s*([0-9.]+)(pt|px)/i);
+            if (fontSizeMatch) {
+                const value = parseFloat(fontSizeMatch[1]);
+                const unit = fontSizeMatch[2].toLowerCase();
+                
+                if (unit === 'pt') return value;
+                if (unit === 'px') return value * 0.75; // Конвертация px в pt
+            }
+            
+            // 2. Проверяем классы
+            if (element.classList.contains('text-25pt')) return 25.5;
+            if (element.classList.contains('text-17pt')) return 17.5;
+            if (element.classList.contains('text-15pt')) return 15;
+            
+            // 3. Проверяем вычисленные стили
+            if (element.ownerDocument && element.ownerDocument.defaultView) {
+                const computedStyle = element.ownerDocument.defaultView.getComputedStyle(element);
+                const fontSize = parseFloat(computedStyle.fontSize);
+                if (!isNaN(fontSize)) return fontSize * 0.75; // px to pt
+            }
+            
+            return null;
+        }
+
+        // Улучшенная функция определения заголовков
+        function analyzeElementForHeaders(element) {
+            if (!element.nodeType || element.nodeType !== 1) return null;
+            
+            // Проверяем, является ли элемент уже заголовком
+            if (/^h[1-6]$/i.test(element.tagName)) {
+                return element.tagName.toLowerCase();
+            }
+            
+            // Проверяем классы размеров
+            if (element.classList.contains('text-25pt')) return 'h1';
+            if (element.classList.contains('text-17pt')) return 'h2';
+            if (element.classList.contains('text-15pt')) return 'h3';
+            
+            // Проверяем размер шрифта
+            const fontSizePt = getFontSizeInPt(element);
+            if (fontSizePt) {
+                const tolerance = 0.5;
+                if (Math.abs(fontSizePt - 25.5) <= tolerance) return 'h1';
+                if (Math.abs(fontSizePt - 17.5) <= tolerance) return 'h2';
+                if (Math.abs(fontSizePt - 15) <= tolerance) return 'h3';
+            }
+            
+            // Проверяем стили Google Docs
+            const style = element.getAttribute('style') || '';
+            if (style.includes('line-height:1.411764705882353') && 
+                style.includes('margin-top:0pt') && 
+                style.includes('margin-bottom:13pt')) {
+                return 'h1';
+            }
+            if (style.includes('line-height:1.44') && 
+                style.includes('margin-top:26pt') && 
+                style.includes('margin-bottom:9pt')) {
+                return 'h2';
+            }
+            if (style.includes('line-height:1.44') && 
+                style.includes('margin-top:23pt') && 
+                style.includes('margin-bottom:8pt')) {
+                return 'h3';
+            }
+            
+            return null;
+        }
+
+        // ИСПРАВЛЕННАЯ функция очистки дублирующихся BB-тегов
+        function cleanDuplicateBBTags(bbCode) {
+            let previousLength;
+            do {
+                previousLength = bbCode.length;
+                
+                // Убираем дублирующиеся открывающие теги
+                bbCode = bbCode.replace(/\[b\]\s*\[b\]/gi, '[b]');
+                bbCode = bbCode.replace(/\[i\]\s*\[i\]/gi, '[i]');
+                bbCode = bbCode.replace(/\[u\]\s*\[u\]/gi, '[u]');
+                bbCode = bbCode.replace(/\[s\]\s*\[s\]/gi, '[s]');
+                
+                // Убираем дублирующиеся закрывающие теги
+                bbCode = bbCode.replace(/\[\/b\]\s*\[\/b\]/gi, '[/b]');
+                bbCode = bbCode.replace(/\[\/i\]\s*\[\/i\]/gi, '[/i]');
+                bbCode = bbCode.replace(/\[\/u\]\s*\[\/u\]/gi, '[/u]');
+                bbCode = bbCode.replace(/\[\/s\]\s*\[\/s\]/gi, '[/s]');
+                
+                // Убираем пустые теги
+                bbCode = bbCode.replace(/\[b\]\s*\[\/b\]/gi, '');
+                bbCode = bbCode.replace(/\[i\]\s*\[\/i\]/gi, '');
+                bbCode = bbCode.replace(/\[u\]\s*\[\/u\]/gi, '');
+                bbCode = bbCode.replace(/\[s\]\s*\[\/s\]/gi, '');
+                
+                // Убираем некорректные вложенные структуры
+                bbCode = bbCode.replace(/\[b\]([^[]*)\[b\](.*?)\[\/b\]([^[]*)\[\/b\]/gi, '[b]$1$2$3[/b]');
+                bbCode = bbCode.replace(/\[i\]([^[]*)\[i\](.*?)\[\/i\]([^[]*)\[\/i\]/gi, '[i]$1$2$3[/i]');
+                
+            } while (bbCode.length !== previousLength);
+            
+            return bbCode;
+        }
+
+        // НОВАЯ функция для правильной обработки структуры BB-кода
+        function normalizeBBStructure(bbCode) {
+            // Разбиваем на строки для построчной обработки
+            const lines = bbCode.split('\n');
+            const processedLines = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                
+                // Пропускаем пустые строки в начале
+                if (line === '' && processedLines.length === 0) continue;
+                
+                // Обрабатываем строки со списками
+                if (line.startsWith('[*]')) {
+                    processedLines.push(line);
+                    continue;
+                }
+                
+                // Обрабатываем строки с тегами
+                if (line !== '') {
+                    processedLines.push(line);
+                } else if (processedLines.length > 0 && processedLines[processedLines.length - 1] !== '') {
+                    // Добавляем пустую строку только если предыдущая строка не пустая
+                    processedLines.push('');
+                }
+            }
+            
+            return processedLines.join('\n');
+        }
+
+        // Функция обновления статистики
+        function updateStats() {
+            const editor = document.getElementById('editor');
+            const text = editor.textContent || '';
+            
+            // Подсчет символов
+            const charCount = text.length;
+            
+            // Подсчет слов
+            const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+            
+            // Подсчет абзацев
+            const paragraphCount = editor.innerHTML.split(/<\/p>|<br>/i).length - 1;
+            
+            document.getElementById('char-count').textContent = charCount;
+            document.getElementById('word-count').textContent = wordCount;
+            document.getElementById('paragraph-count').textContent = Math.max(1, paragraphCount);
+        }
+
+        // Показать действие
+        function showAction(action) {
+            const actionElement = document.getElementById('last-action');
+            actionElement.textContent = action;
+            setTimeout(() => {
+                actionElement.textContent = '';
+            }, 2000);
+        }
+
+        // Выделить весь текст
+        function selectAllText() {
+            const editor = document.getElementById('editor');
+            const range = document.createRange();
+            range.selectNodeContents(editor);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            showAction('Весь текст выделен');
+        }
+
+        // Функции форматирования текста
+        function formatText(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('editor').focus();
+            convertContent();
+            showAction(`Применено: ${command}`);
+        }
+
+        // Вставка ссылки
+        function insertLink() {
+            const url = prompt('Введите URL:');
+            if (url) {
+                const text = window.getSelection().toString() || prompt('Введите текст ссылки:') || url;
+                const link = `<a href="${url}">${text}</a>`;
+                document.execCommand('insertHTML', false, link);
+                convertContent();
+                showAction('Ссылка добавлена');
+            }
+        }
+
+        // Вставка изображения с поддержкой alt и title
+        function insertImage() {
+            const url = prompt('Введите URL изображения:');
+            if (url) {
+                const alt = prompt('Введите альтернативный текст:') || '';
+                const title = prompt('Введите заголовок изображения (title):') || '';
+                
+                let img = `<img src="${url}"`;
+                if (alt) img += ` alt="${alt}"`;
+                if (title) img += ` title="${title}"`;
+                img += ` onerror="this.style.border='1px dashed red'; this.style.padding='5px'; this.alt='Изображение недоступно';"`;
+                img += `>`;
+                
+                document.execCommand('insertHTML', false, img);
+                convertContent();
+                showAction('Изображение добавлено');
+            }
+        }
+
+        // Вставка таблицы
+        function insertTable() {
+            const rows = prompt('Количество строк:', '3');
+            const cols = prompt('Количество столбцов:', '3');
+            
+            if (rows && cols) {
+                let table = '<table><tbody>';
+                for (let i = 0; i < parseInt(rows); i++) {
+                    table += '<tr>';
+                    for (let j = 0; j < parseInt(cols); j++) {
+                        if (i === 0) {
+                            table += '<th>Заголовок ' + (j + 1) + '</th>';
+                        } else {
+                            table += '<td>Ячейка ' + i + '-' + (j + 1) + '</td>';
+                        }
+                    }
+                    table += '</tr>';
+                }
+                table += '</tbody></table>';
+                
+                document.execCommand('insertHTML', false, table);
+                convertContent();
+                showAction('Таблица добавлена');
+            }
+        }
+
+        // Исправленная функция для очистки элементов списка
+        function cleanListItems(element) {
+            // Обрабатываем все списки
+            const lists = element.querySelectorAll('ul, ol');
+            lists.forEach(list => {
+                // Проверяем отступы у списков
+                if (!list.style.paddingLeft) {
+                    list.style.paddingLeft = '30px';
+                }
+                
+                // Устраняем лишние вложенные списки
+                const nestedLists = list.querySelectorAll('ul > ul, ol > ol');
+                nestedLists.forEach(nestedList => {
+                    const parentLi = nestedList.closest('li');
+                    if (parentLi && parentLi.parentNode === nestedList.parentNode) {
+                        parentLi.appendChild(nestedList);
+                    }
+                });
+            });
+            
+            // Обрабатываем элементы списков
+            const listItems = element.querySelectorAll('li');
+            listItems.forEach(li => {
+                // Устанавливаем явно display: list-item для корректного отображения
+                li.style.display = 'list-item';
+                // Добавляем отступ внутри элемента списка
+                li.style.paddingLeft = '5px';
+                // Добавляем отступ между элементами списка
+                li.style.marginBottom = '5px';
+                
+                // Заменяем только множественные <br><br> внутри li на одинарные
+                li.innerHTML = li.innerHTML.replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>');
+                // Удаляем <br> в самом конце элемента li
+                li.innerHTML = li.innerHTML.replace(/<br\s*\/?>\s*$/gi, '');
+            });
+            
+            // Убеждаемся, что маркеры списка отображаются корректно
+            const ulItems = element.querySelectorAll('ul > li');
+            ulItems.forEach(li => {
+                li.style.listStyleType = 'disc';
+            });
+            
+            const olItems = element.querySelectorAll('ol > li');
+            olItems.forEach(li => {
+                li.style.listStyleType = 'decimal';
+            });
+        }
+
+        // Основная функция конвертации
+        function convertContent() {
+            const editor = document.getElementById('editor');
+            const content = editor.innerHTML;
+            
+            if (!content || content === '<br>') {
+                clearAllOutputs();
+                return;
+            }
+
+            // Конвертация в разные форматы
+            const htmlResult = convertToCleanHTML(content);
+            const bbResult = convertToBB(content);
+            const markdownResult = convertToMarkdown(content);
+
+            // Обновление результатов
+            document.getElementById('html-output').value = htmlResult;
+            document.getElementById('bb-output').value = cleanEmptyLines(bbResult);
+            document.getElementById('markdown-output').value = cleanEmptyLines(markdownResult);
+        }
+
+        // Улучшенная конвертация в чистый HTML
+        function convertToCleanHTML(content) {
+            // Удаляем фрагменты из контента
+            content = removeFragments(content);
+            
+            const temp = document.createElement('div');
+            temp.innerHTML = content;
+            
+            // Анализируем и конвертируем заголовки
+            function analyzeAndConvertHeaders(element) {
+                const children = Array.from(element.children);
+                children.forEach(child => {
+                    // Пропускаем, если элемент уже является заголовком
+                    if (/^h[1-6]$/i.test(child.tagName)) {
+                        // Удаляем все стили у существующих заголовков
+                        child.removeAttribute('style');
+                        return;
+                    }
+                    
+                    const headerType = analyzeElementForHeaders(child);
+                    if (headerType && child.textContent.trim()) {
+                        // Создаем новый заголовок
+                        const header = document.createElement(headerType);
+                        
+                        // Переносим все дочерние элементы
+                        while (child.firstChild) {
+                            header.appendChild(child.firstChild);
+                        }
+                        
+                        // Копируем классы и атрибуты (кроме стилей)
+                        Array.from(child.attributes).forEach(attr => {
+                            if (attr.name !== 'style') {
+                                header.setAttribute(attr.name, attr.value);
+                            }
+                        });
+                        
+                        child.replaceWith(header);
+                    } else if (child.children.length > 0) {
+                        // Рекурсивно анализируем дочерние элементы
+                        analyzeAndConvertHeaders(child);
+                    }
+                });
+            }
+
+            // Применяем анализ заголовков
+            analyzeAndConvertHeaders(temp);
+            
+            // Очищаем элементы списков аккуратно
+            cleanListItems(temp);
+            
+            // Преобразуем span в семантические теги (пропуская заголовки)
+            convertSpansToSemanticTags(temp);
+            
+            // Обработка изображений из BB-кода с сохранением alt
+            let html = temp.innerHTML;
+            const firstHeading = getFirstHeading(html);
+            
+            // Обработка BB-кода изображений с сохранением alt
+            html = html.replace(/\[img=([^\]]+)\](.*?)\[\/img\]/gi, '<img src="$1" alt="$2">');
+            html = html.replace(/\[img\](.*?)\[\/img\]/gi, function(match, url) {
+                return '<img src="' + url + '"' + (firstHeading ? ' alt="' + firstHeading + '"' : '') + '>';
+            });
+            
+            temp.innerHTML = html;
+            
+            // Удаляем все span теги, сохраняя содержимое
+            function removeSpans(element) {
+                const spans = element.querySelectorAll('span');
+                spans.forEach(span => {
+                    while (span.firstChild) {
+                        span.parentNode.insertBefore(span.firstChild, span);
+                    }
+                    span.remove();
+                });
+            }
+            
+            removeSpans(temp);
+
+            // Удаляем пустые div теги
+            const divs = temp.querySelectorAll('div');
+            divs.forEach(div => {
+                if (!div.textContent.trim() && div.children.length === 0) {
+                    div.remove();
+                } else if (div.children.length === 0 && div.textContent.trim()) {
+                    // Заменяем div с только текстом на p
+                    const p = document.createElement('p');
+                    p.textContent = div.textContent;
+                    div.replaceWith(p);
+                }
+            });
+
+            // Очистка атрибутов с сохранением alt, title и других важных атрибутов
+            const elements = temp.querySelectorAll('*');
+            elements.forEach(el => {
+                const allowedAttrs = {
+                    'img': ['src', 'alt', 'title', 'width', 'height'],
+                    'a': ['href', 'title', 'target'],
+                    'li': ['type', 'value'],
+                    'ol': ['type', 'start', 'reversed'],
+                    'ul': ['type'],
+                    'table': ['border', 'cellspacing', 'cellpadding', 'width'],
+                    'tbody': [],
+                    'tr': [],
+                    'td': ['colspan', 'rowspan', 'width', 'height'],
+                    'th': ['colspan', 'rowspan', 'width', 'height']
+                };
+                
+                const tagName = el.tagName.toLowerCase();
+                const allowed = allowedAttrs[tagName] || [];
+                
+                const attrs = [...el.attributes];
+                attrs.forEach(attr => {
+                    if (!allowed.includes(attr.name)) {
+                        el.removeAttribute(attr.name);
+                    }
+                });
+            });
+
+            // Убираем пустые элементы
+            const emptyElements = temp.querySelectorAll('*');
+            emptyElements.forEach(el => {
+                if (!['br', 'img', 'hr'].includes(el.tagName.toLowerCase()) && 
+                    !el.textContent.trim() && el.children.length === 0) {
+                    el.remove();
+                }
+            });
+
+            // Форматирование с переносами строк
+            let result = temp.innerHTML;
+            
+            // Добавляем переносы после закрывающих тегов (кроме inline элементов)
+            const blockTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'li', 'tr', 'td', 'th', 'table', 'tbody', 'ul', 'ol'];
+            
+            blockTags.forEach(tag => {
+                const regex = new RegExp(`</${tag}>`, 'gi');
+                result = result.replace(regex, `</${tag}>\n`);
+            });
+
+            // Убираем лишние переносы
+            result = result.replace(/\n\s*\n/g, '\n').trim();
+            
+            // Финишная очистка от фрагментов
+            result = removeFragments(result);
+            
+            return result;
+        }
+
+        // ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ конвертация в BB-код
+        function convertToBB(content) {
+            const temp = document.createElement('div');
+            temp.innerHTML = content;
+            const firstHeading = getFirstHeading(content);
+
+            // ИСПРАВЛЕННАЯ функция анализа заголовков для BB
+            function analyzeAndConvertHeadersToBB(element) {
+                const children = Array.from(element.children);
+                children.forEach(child => {
+                    // Если элемент уже заголовок h1-h6, преобразуем его в жирный текст внутри абзаца
+                    if (/^h[1-6]$/i.test(child.tagName)) {
+                        const p = document.createElement('p');
+                        const bold = document.createElement('strong');
+                        bold.textContent = child.textContent; // Используем только текстовое содержимое
+                        p.appendChild(bold);
+                        child.replaceWith(p);
+                        return;
+                    }
+                    
+                    const headerType = analyzeElementForHeaders(child);
+                    if (headerType && child.textContent.trim()) {
+                        // Создаем параграф с жирным содержимым
+                        const p = document.createElement('p');
+                        const bold = document.createElement('strong');
+                        bold.textContent = child.textContent; // Используем только текстовое содержимое
+                        p.appendChild(bold);
+                        child.replaceWith(p);
+                    } else if (child.children.length > 0) {
+                        // Рекурсивно анализируем дочерние элементы
+                        analyzeAndConvertHeadersToBB(child);
+                    }
+                });
+            }
+
+            // Применяем анализ заголовков для BB
+            analyzeAndConvertHeadersToBB(temp);
+
+            // Очищаем элементы списков
+            cleanListItems(temp);
+
+            // Преобразуем span в семантические теги
+            convertSpansToSemanticTags(temp);
+
+            let bb = temp.innerHTML;
+            
+            // Удаляем span теги, сохраняя содержимое
+            bb = bb.replace(/<span[^>]*>(.*?)<\/span>/gi, '$1');
+            
+            // Преобразование HTML тегов в BB-коды (правильный порядок)
+            bb = bb.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '[b]$1[/b]');
+            bb = bb.replace(/<b[^>]*>(.*?)<\/b>/gi, '[b]$1[/b]');
+            bb = bb.replace(/<em[^>]*>(.*?)<\/em>/gi, '[i]$1[/i]');
+            bb = bb.replace(/<i[^>]*>(.*?)<\/i>/gi, '[i]$1[/i]');
+            bb = bb.replace(/<u[^>]*>(.*?)<\/u>/gi, '[u]$1[/u]');
+            bb = bb.replace(/<s[^>]*>(.*?)<\/s>/gi, '[s]$1[/s]');
+            bb = bb.replace(/<strike[^>]*>(.*?)<\/strike>/gi, '[s]$1[/s]');
+            
+            // Ссылки
+            bb = bb.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[url=$1]$2[/url]');
+            
+            // Изображения
+            bb = bb.replace(/<img[^>]*src="([^"]*)"[^>]*>/gi, '[img]$1[/img]');
+            
+            // Таблицы
+            bb = bb.replace(/<table[^>]*>/gi, '[table]');
+            bb = bb.replace(/<\/table>/gi, '[/table]');
+            bb = bb.replace(/<tbody[^>]*>/gi, '');
+            bb = bb.replace(/<\/tbody>/gi, '');
+            bb = bb.replace(/<tr[^>]*>/gi, '[tr]');
+            bb = bb.replace(/<\/tr>/gi, '[/tr]');
+            bb = bb.replace(/<th[^>]*>(.*?)<\/th>/gi, '[th]$1[/th]');
+            bb = bb.replace(/<td[^>]*>(.*?)<\/td>/gi, '[td]$1[/td]');
+            
+            // Списки
+            bb = bb.replace(/<ul[^>]*>/gi, '[list]');
+            bb = bb.replace(/<\/ul>/gi, '[/list]');
+            bb = bb.replace(/<ol[^>]*>/gi, '[list=1]');
+            bb = bb.replace(/<\/ol>/gi, '[/list]');
+            bb = bb.replace(/<li[^>]*>(.*?)<\/li>/gi, '[*]$1');
+            
+            // ИСПРАВЛЕННАЯ обработка абзацев - сначала содержимое, потом переносы
+            bb = bb.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n');
+            
+            // Переносы строк
+            bb = bb.replace(/<br[^>]*>/gi, '\n');
+            bb = bb.replace(/<\/div>/gi, '\n');
+            bb = bb.replace(/<div[^>]*>/gi, '');
+            
+            // Очистка от остальных HTML тегов
+            bb = bb.replace(/<[^>]*>/g, '');
+            
+            // Декодирование HTML entities
+            bb = bb.replace(/&lt;/g, '<');
+            bb = bb.replace(/&gt;/g, '>');
+            bb = bb.replace(/&amp;/g, '&');
+            bb = bb.replace(/&quot;/g, '"');
+            bb = bb.replace(/&#39;/g, "'");
+            bb = bb.replace(/&nbsp;/g, ' ');
+            
+            // Очистка дублирующихся BB-тегов
+            bb = cleanDuplicateBBTags(bb);
+            
+            // Нормализация структуры
+            bb = normalizeBBStructure(bb);
+// Удаляем непарные закрывающие теги в конце
+bb = bb.replace(/\[\/b\]\s*$/gi, '');
+bb = bb.replace(/\[\/i\]\s*$/gi, '');
+bb = bb.replace(/\[\/u\]\s*$/gi, '');
+bb = bb.replace(/\[\/s\]\s*$/gi, '');
+            
+            return bb.trim();
+        }
+
+        // Улучшенная конвертация в Markdown
+        function convertToMarkdown(content) {
+            const temp = document.createElement('div');
+            temp.innerHTML = content;
+            const firstHeading = getFirstHeading(content);
+
+            // Анализируем элементы на предмет заголовков
+            function analyzeAndConvertHeadersToMD(element) {
+                const children = Array.from(element.children);
+                children.forEach(child => {
+                    // Если элемент уже заголовок h1-h6, сохраняем его как есть
+                    if (/^h[1-6]$/i.test(child.tagName)) {
+                        return; // Оставляем исходный заголовок
+                    }
+                    
+                    const headerType = analyzeElementForHeaders(child);
+                    if (headerType && child.textContent.trim()) {
+                        // Создаем новый заголовок для Markdown
+                        const header = document.createElement(headerType);
+                        header.textContent = child.textContent;
+                        child.replaceWith(header);
+                    } else if (child.children.length > 0) {
+                        // Рекурсивно анализируем дочерние элементы
+                        analyzeAndConvertHeadersToMD(child);
+                    }
+                });
+            }
+            
+            // Применяем анализ заголовков для Markdown
+            analyzeAndConvertHeadersToMD(temp);
+
+            // Очищаем элементы списков аккуратно
+            cleanListItems(temp);
+
+            // Преобразуем оставшиеся span в семантические теги
+            convertSpansToSemanticTags(temp);
+
+            let md = temp.innerHTML;
+            
+            // Удаляем span теги
+            md = md.replace(/<span[^>]*>(.*?)<\/span>/gi, '$1');
+            
+            // Заголовки
+            md = md.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n');
+            md = md.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n');
+            md = md.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n');
+            md = md.replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n');
+            md = md.replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n');
+            md = md.replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n');
+            
+            // Выделение текста (кроме заголовков)
+            md = md.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**');
+            md = md.replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**');
+            md = md.replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*');
+            md = md.replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*');
+            
+            // Ссылки
+            md = md.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
+            
+            // Изображения с сохранением alt и title
+            md = md.replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*title="([^"]*)"[^>]*>/gi, '![$2]($1 "$3")');
+            md = md.replace(/<img[^>]*src="([^"]*)"[^>]*title="([^"]*)"[^>]*alt="([^"]*)"[^>]*>/gi, '![$3]($1 "$2")');
+            md = md.replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>/gi, '![$2]($1)');
+            md = md.replace(/<img[^>]*src="([^"]*)"[^>]*>/gi, function(match, url) {
+                if (firstHeading) {
+                    return '![' + firstHeading + '](' + url + ')';
+                }
+                return '![](' + url + ')';
+            });
+            
+            // Улучшенная обработка таблиц
+            md = md.replace(/<table[^>]*>(.*?)<\/table>/gis, function(match, tableContent) {
+                let tableRows = [];
+                
+                // Убираем tbody теги
+                tableContent = tableContent.replace(/<\/?tbody[^>]*>/gi, '');
+                
+                // Извлекаем строки таблицы
+                const rows = tableContent.match(/<tr[^>]*>(.*?)<\/tr>/gis);
+                if (rows) {
+                    rows.forEach((row, index) => {
+                        // Извлекаем все ячейки (th и td)
+                        const cells = row.match(/<t[hd][^>]*>(.*?)<\/t[hd]>/gis);
+                        if (cells) {
+                            const cellContents = cells.map(cell => {
+                                // Извлекаем содержимое ячейки и очищаем от HTML тегов
+                                let cellText = cell.replace(/<t[hd][^>]*>(.*?)<\/t[hd]>/gis, '$1');
+                                cellText = cellText.replace(/<[^>]*>/g, '').trim();
+                                return cellText || ' '; // Пустые ячейки заменяем пробелом
+                            });
+                            
+                            tableRows.push('| ' + cellContents.join(' | ') + ' |');
+                            
+                            // Добавляем разделительную строку после первой строки (заголовки)
+                            if (index === 0) {
+                                const separator = '| ' + cellContents.map(() => '---').join(' | ') + ' |';
+                                tableRows.push(separator);
+                            }
+                        }
+                    });
+                }
+                
+                return tableRows.length > 0 ? '\n' + tableRows.join('\n') + '\n\n' : '';
+            });
+            
+            // Улучшенная обработка списков
+            // Сначала обрабатываем упорядоченные списки
+            md = md.replace(/<ol[^>]*>(.*?)<\/ol>/gis, function(match, content) {
+                let result = '\n';
+                const items = content.match(/<li[^>]*>(.*?)<\/li>/gis);
+                if (items) {
+                    items.forEach((item, index) => {
+                        const itemContent = item.replace(/<li[^>]*>(.*?)<\/li>/gis, '$1').trim();
+                        result += (index + 1) + '. ' + itemContent + '\n';
+                    });
+                }
+                return result + '\n';
+            });
+            
+            // Затем неупорядоченные списки
+            md = md.replace(/<ul[^>]*>(.*?)<\/ul>/gis, function(match, content) {
+                let result = '\n';
+                const items = content.match(/<li[^>]*>(.*?)<\/li>/gis);
+                if (items) {
+                    items.forEach(item => {
+                        const itemContent = item.replace(/<li[^>]*>(.*?)<\/li>/gis, '$1').trim();
+                        result += '- ' + itemContent + '\n';
+                    });
+                }
+                return result + '\n';
+            });
+            
+            // Переносы строк (улучшенная обработка)
+            md = md.replace(/<br[^>]*>/gi, '\n');
+            md = md.replace(/<\/p>\s*<p[^>]*>/gi, '\n\n');  // Двойной перенос между абзацами
+            md = md.replace(/<\/p>/gi, '\n\n');  // Двойной перенос после абзаца
+            md = md.replace(/<p[^>]*>/gi, '');   // Удаляем открывающий тег p
+            
+            // Обработка блоков div (только с дополнительным переносом)
+            md = md.replace(/<\/div>\s*<div[^>]*>/gi, '\n');
+            md = md.replace(/<div[^>]*>/gi, '');
+            md = md.replace(/<\/div>/gi, '\n');
+            
+            // Очистка от остальных HTML тегов
+            md = md.replace(/<[^>]*>/g, '');
+            
+            // Декодирование HTML entities
+            md = md.replace(/&lt;/g, '<');
+            md = md.replace(/&gt;/g, '>');
+            md = md.replace(/&amp;/g, '&');
+            md = md.replace(/&quot;/g, '"');
+            md = md.replace(/&#39;/g, "'");
+            md = md.replace(/&nbsp;/g, ' ');
+            
+            // Более аккуратная обработка переносов строк - убираем тройные и более переносы
+            md = md.replace(/\n{3,}/g, '\n\n');
+            
+            return md;
+        }
+
+        // Удаление пустых строк
+        function cleanEmptyLines(text) {
+            return text
+                .replace(/\n\s*\n\s*\n/g, '\n\n')
+                .replace(/^\s*\n|\n\s*$/g, '')
+                .trim();
+        }
+
+        // Переключение вкладок
+        function showTab(tabName) {
+            currentTab = tabName;
+            
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.add('hidden');
+            });
+            
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = 'tab-btn px-6 py-3 tab-inactive font-medium transition-all duration-300';
+            });
+            
+            event.currentTarget.className = 'tab-btn px-6 py-3 tab-active font-medium transition-all duration-300';
+            
+            showAction(`Переключено на ${tabName.toUpperCase()}`);
+        }
+
+        // Улучшенное копирование в буфер обмена
+        async function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            try {
+                await navigator.clipboard.writeText(element.value);
+                
+                const btn = event.currentTarget;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check mr-2"></i>Скопировано!';
+                btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                btn.classList.add('bg-blue-500');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('bg-blue-500');
+                    btn.classList.add('bg-green-500', 'hover:bg-green-600');
+                }, 2000);
+                
+                showAction('Код скопирован в буфер обмена');
+            } catch (err) {
+                element.select();
+                document.execCommand('copy');
+                showAction('Код скопирован (fallback)');
+            }
+        }
+
+        // Очистка редактора
+        function clearEditor() {
+            document.getElementById('editor').innerHTML = '';
+            clearAllOutputs();
+            updateStats();
+            showAction('Редактор очищен');
+        }
+
+        // Очистка всех выходов
+        function clearAllOutputs() {
+            document.getElementById('html-output').value = '';
+            document.getElementById('bb-output').value = '';
+            document.getElementById('markdown-output').value = '';
+        }
+        
+        // Функции для работы с модальным окном вставки кода
+        
+        // Открытие модального окна для ввода кода
+        function openCodeModal(type) {
+            currentCodeType = type;
+            const titles = {
+                'bb': 'Вставка BB-кода',
+                'html': 'Вставка HTML',
+                'markdown': 'Вставка Markdown'
+            };
+            document.getElementById('modal-title').textContent = titles[type];
+            document.getElementById('code-input').value = '';
+            document.getElementById('code-modal').style.display = 'flex';
+            document.getElementById('code-input').focus();
+        }
+        
+        // Закрытие модального окна
+        function closeCodeModal() {
+            document.getElementById('code-modal').style.display = 'none';
+        }
+        
+        // Вставка кода с улучшенной обработкой BB-кода
+        function insertCode() {
+            const code = document.getElementById('code-input').value.trim();
+            if (code) {
+                let html = '';
+                
+                switch(currentCodeType) {
+                    case 'bb':
+                        html = convertBBToHTML(code);
+                        break;
+                    case 'html':
+                        html = code; // Используем исходный HTML без дополнительной обработки
+                        break;
+                    case 'markdown':
+                        html = convertMarkdownToHTML(code);
+                        break;
+                }
+                
+                // Создаем временный контейнер для правильной обработки HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // Проверяем и корректируем изображения перед вставкой
+                const images = tempDiv.querySelectorAll('img');
+                images.forEach(img => {
+                    if (img.src && !img.getAttribute('onerror')) {
+                        img.setAttribute('onerror', "this.style.border='1px dashed red'; this.style.padding='5px'; this.alt='Изображение недоступно';");
+                        img.style.maxWidth = '100%';
+                        img.style.height = 'auto';
+                    }
+                });
+                
+                // Получаем редактор и фокусируемся на нем
+                const editor = document.getElementById('editor');
+                editor.focus();
+                
+                // Получаем текущую позицию курсора
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    
+                    // Создаем документный фрагмент
+                    const fragment = document.createDocumentFragment();
+                    while (tempDiv.firstChild) {
+                        fragment.appendChild(tempDiv.firstChild);
+                    }
+                    
+                    // Вставляем фрагмент
+                    range.insertNode(fragment);
+                    
+                    // Перемещаем курсор
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                
+                // Закрытие модального окна
+                closeCodeModal();
+                
+                // Обновление с небольшой задержкой
+                setTimeout(() => {
+                    processLinksAndImages(); 
+                    updateStats();
+                    convertContent();
+                    showAction('Код вставлен');
+                }, 10);
+            }
+        }
+        
+        // ИСПРАВЛЕННАЯ функция конвертации BB-кода в HTML
+        function convertBBToHTML(bbCode) {
+            // Улучшенная обработка списков
+            bbCode = bbCode.replace(/\[list\]([\s\S]*?)\[\/list\]/gi, function(match, content) {
+                const items = content.split(/\[\*\]/).filter(item => item.trim() !== '');
+                if (items.length === 0) return '';
+                
+                const lis = items.map(item => {
+                    // Рекурсивная обработка вложенных списков
+                    const processed = convertBBToHTML(item);
+                    return `<li>${processed}</li>`;
+                }).join('');
+                
+                return `<ul>${lis}</ul>`;
+            });
+
+            bbCode = bbCode.replace(/\[list=1\]([\s\S]*?)\[\/list\]/gi, function(match, content) {
+                const items = content.split(/\[\*\]/).filter(item => item.trim() !== '');
+                if (items.length === 0) return '';
+                
+                const lis = items.map(item => {
+                    const processed = convertBBToHTML(item);
+                    return `<li>${processed}</li>`;
+                }).join('');
+                
+                return `<ol>${lis}</ol>`;
+            });
+
+            // Обработка BB-кодов форматирования
+            bbCode = bbCode.replace(/\[b\](.*?)\[\/b\]/gi, '<strong>$1</strong>');
+            bbCode = bbCode.replace(/\[i\](.*?)\[\/i\]/gi, '<em>$1</em>');
+            bbCode = bbCode.replace(/\[u\](.*?)\[\/u\]/gi, '<u>$1</u>');
+            bbCode = bbCode.replace(/\[s\](.*?)\[\/s\]/gi, '<s>$1</s>');
+            
+            // Ссылки
+            bbCode = bbCode.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/gi, '<a href="$1">$2</a>');
+            bbCode = bbCode.replace(/\[url\](.*?)\[\/url\]/gi, '<a href="$1">$1</a>');
+            
+            // Изображения
+            bbCode = bbCode.replace(/\[img=([^\]]+)\](.*?)\[\/img\]/gi, '<img src="$1" alt="$2">');
+            bbCode = bbCode.replace(/\[img\](.*?)\[\/img\]/gi, '<img src="$1">');
+            
+            // Таблицы
+            bbCode = bbCode.replace(/\[table\](.*?)\[\/table\]/gi, '<table>$1</table>');
+            bbCode = bbCode.replace(/\[tr\](.*?)\[\/tr\]/gi, '<tr>$1</tr>');
+            bbCode = bbCode.replace(/\[th\](.*?)\[\/th\]/gi, '<th>$1</th>');
+            bbCode = bbCode.replace(/\[td\](.*?)\[\/td\]/gi, '<td>$1</td>');
+            
+            // Цитаты
+            bbCode = bbCode.replace(/\[quote\](.*?)\[\/quote\]/gi, '<blockquote>$1</blockquote>');
+            
+            // Код
+            bbCode = bbCode.replace(/\[code\](.*?)\[\/code\]/gi, '<pre><code>$1</code></pre>');
+            
+            // Переносы строк
+            bbCode = bbCode.replace(/\n/g, '<br>');
+            
+            // Обработка многострочных BB-кодов
+            let html = bbCode;
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            
+            return temp.innerHTML;
+        }
+        
+        // Улучшенная конвертация Markdown в HTML
+        function convertMarkdownToHTML(md) {
+            let html = md;
+            
+            // Заголовки
+            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+            html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
+            html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
+            
+            // Выделение текста
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            html = html.replace(/~~(.*?)~~/g, '<s>$1</s>');
+            
+            // Ссылки
+            html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+            
+            // Улучшенная обработка изображений
+            html = html.replace(/!\[(.*?)\]\((.*?)(?: "([^"]*)")?\)/g, function(match, alt, src, title) {
+                return '<img src="' + src + '"' + 
+                       (alt ? ' alt="' + alt + '"' : '') + 
+                       (title ? ' title="' + title + '"' : '') + 
+                       ' onerror="this.style.border=\'1px dashed red\'; this.style.padding=\'5px\'; this.alt=\'Изображение недоступно\';"' +
+                       '>';
+            });
+            
+            // Код
+            html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+            html = html.replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>');
+            
+            // Цитаты
+            html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
+            
+            // Улучшенная обработка списков
+            let inList = false;
+            let listType = '';
+            let listItems = [];
+            
+            // Разбиваем на строки для построчной обработки
+            const lines = html.split('\n');
+            const processedLines = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                
+                // Обработка маркированного списка
+                if (line.match(/^\s*[\-\*\+] /)) {
+                    if (!inList || listType !== 'ul') {
+                        if (inList) { // Закрываем предыдущий список
+                            processedLines.push(`</${listType}>`);
+                        }
+                        inList = true;
+                        listType = 'ul';
+                        processedLines.push('<ul>');
+                    }
+                    // Обрабатываем элемент списка
+                    const content = line.replace(/^\s*[\-\*\+] /, '');
+                    processedLines.push(`<li>${content}</li>`);
+                    continue;
+                }
+                
+                // Обработка нумерованного списка
+                if (line.match(/^\s*\d+\. /)) {
+                    if (!inList || listType !== 'ol') {
+                        if (inList) { // Закрываем предыдущий список
+                            processedLines.push(`</${listType}>`);
+                        }
+                        inList = true;
+                        listType = 'ol';
+                        processedLines.push('<ol>');
+                    }
+                    // Обрабатываем элемент списка
+                    const content = line.replace(/^\s*\d+\. /, '');
+                    processedLines.push(`<li>${content}</li>`);
+                    continue;
+                }
+                
+                // Если это не элемент списка, но мы внутри списка - закрываем список
+                if (inList && line.trim() !== '') {
+                    processedLines.push(`</${listType}>`);
+                    inList = false;
+                }
+                
+                // Добавляем строку как есть, если это не список
+                if (line.trim() !== '' || !inList) {
+                    processedLines.push(line);
+                }
+            }
+            
+            // Закрываем открытый список, если такой был
+            if (inList) {
+                processedLines.push(`</${listType}>`);
+            }
+            
+            html = processedLines.join('\n');
+            
+            // Обработка таблиц
+            html = html.replace(/^\| (.+) \|\s*\n\| *\-[-\| ]* \|\s*\n((?: *\|.+\|\s*\n?)*)/gm, function(match, header, rows) {
+                const headers = header.split('|').map(cell => cell.trim()).filter(Boolean);
+                const headerHTML = '<tr>' + headers.map(cell => `<th>${cell}</th>`).join('') + '</tr>';
+                
+                let rowsHTML = '';
+                rows.split('\n').forEach(row => {
+                    if (row.trim()) {
+                        const cells = row.split('|').map(cell => cell.trim()).filter(Boolean);
+                        rowsHTML += '<tr>' + cells.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
+                    }
+                });
+                
+                return `<table><thead>${headerHTML}</thead><tbody>${rowsHTML}</tbody></table>`;
+            });
+            
+            // Более аккуратная обработка переносов строк
+            html = html.replace(/\n\n/g, '</p><p>'); // Двойные переносы превращаем в разделители абзацев
+            html = html.replace(/\n(?!\n)/g, '<br>'); // Одинарные переносы строк заменяем на <br>
+            
+            // Оборачиваем текст в параграфы, если их нет
+            if (!html.includes('<p>')) {
+                html = '<p>' + html + '</p>';
+            }
+            
+            return html;
+        }
+    </script>
+</body>
+</html>

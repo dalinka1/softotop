@@ -1,0 +1,25 @@
+﻿<div class="menu-hover-area"></div>
+
+<nav class="menucontainer">
+    <div class="menulogo">Softo.top</div>
+    <div class="menu-wrapper-head">
+        <button class="scroll-btn" onclick="scrollMenu(-150)">◀</button>
+        <div class="nav-menu-head" id="navMenuhead">
+            <a href="/index.html">softo.top</a>
+            <a href="/editor/index.html">Редакторы</a>
+            <a href="/image-editing/index.html">Работа с изображениями</a>
+            <a href="/seo/index.html">SEO-инструменты</a>
+            <a href="/training/index.html">Обучение</a>
+            <a href="/relaxation/index.html">Развлечение</a>
+            <a href="/blog/blogs.php">Свой Блог</a>
+        </div>
+        <button class="scroll-btn" onclick="scrollMenu(150)">▶</button>
+    </div>
+</nav>
+
+<script>
+function scrollMenu(offset) {
+  const menu = document.getElementById("navMenuhead");
+  if (menu) menu.scrollLeft += offset;
+}
+</script>

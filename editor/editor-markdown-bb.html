@@ -1,0 +1,1049 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown → BBCode Pro</title>
+  <link rel="stylesheet" href="/menu/menu.css">
+  <script src="/menu/menu.js" defer></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #5b59f0;
+      --secondary: #f1f5f9;
+      --accent: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --bg-main: #ffffff;
+      --bg-secondary: #f8fafc;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --border-hover: #cbd5e1;
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    body.dark {
+      --bg-main: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border: #334155;
+      --border-hover: #475569;
+      --secondary: #1e293b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.6;
+      transition: all 0.3s ease;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      color: white;
+      padding: 1.5rem 2rem;
+      box-shadow: var(--shadow-lg);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-icon {
+      width: 2rem;
+      height: 2rem;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .toolbar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 73px;
+      z-index: 90;
+    }
+
+    .cleanup-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    button {
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-tertiary);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+
+    .btn-success {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .btn-success:hover {
+      background: #059669;
+      border-color: #059669;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: white;
+      border-color: var(--warning);
+    }
+
+    .btn-warning:hover {
+      background: #d97706;
+      border-color: #d97706;
+    }
+
+    /* Переключатель трех панелей */
+    .view-toggle {
+      display: flex;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      border: none;
+      border-radius: 0;
+      margin: 0;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+    }
+
+    .view-toggle button.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .container {
+      display: grid;
+      gap: 1.5rem;
+      padding: 2rem;
+      height: calc(100vh - 200px);
+    }
+
+    .container.two-panel {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .container.three-panel {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .editor-panel {
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      background: var(--bg-secondary);
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    textarea {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 1.5rem;
+      font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      resize: none;
+      transition: all 0.3s ease;
+    }
+
+    textarea:focus {
+      background: var(--bg-secondary);
+    }
+
+    textarea::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    /* Панель предварительного просмотра */
+    .preview-content {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      background: var(--bg-main);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+    }
+
+    /* Стили для предварительного просмотра BBCode */
+    .preview-content h1, .preview-content h2, .preview-content h3, 
+    .preview-content h4, .preview-content h5, .preview-content h6 {
+      margin: 1rem 0 0.5rem 0;
+      font-weight: bold;
+    }
+
+    .preview-content h1 { font-size: 1.5em; }
+    .preview-content h2 { font-size: 1.3em; }
+    .preview-content h3 { font-size: 1.2em; }
+    .preview-content h4 { font-size: 1.1em; }
+    .preview-content h5 { font-size: 1.05em; }
+    .preview-content h6 { font-size: 1em; }
+
+    .preview-content strong { font-weight: bold; }
+    .preview-content em { font-style: italic; }
+    .preview-content u { text-decoration: underline; }
+    .preview-content s { text-decoration: line-through; }
+
+    .preview-content .quote {
+      border-left: 4px solid var(--primary);
+      padding: 0.5rem 1rem;
+      margin: 1rem 0;
+      background: var(--bg-secondary);
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+
+    .preview-content .quote .quote {
+      border-left: 4px solid var(--accent);
+      background: var(--bg-tertiary);
+      margin: 0.5rem 0;
+    }
+
+    .preview-content .code {
+      background: var(--bg-secondary);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius);
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+
+    .preview-content .code-block {
+      background: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: var(--radius);
+      font-family: monospace;
+      font-size: 0.9em;
+      margin: 1rem 0;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+
+    .preview-content .spoiler {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+
+    .preview-content .spoiler-title {
+      background: var(--bg-tertiary);
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .preview-content .spoiler-content {
+      padding: 1rem;
+      display: none;
+    }
+
+    .preview-content .spoiler.open .spoiler-content {
+      display: block;
+    }
+
+    .preview-content .center { text-align: center; }
+    .preview-content .right { text-align: right; }
+    .preview-content .left { text-align: left; }
+
+    .preview-content .hr {
+      border: none;
+      border-top: 2px solid var(--border);
+      margin: 2rem 0;
+    }
+
+    .preview-content ul, .preview-content ol {
+      margin: 1rem 0;
+      padding-left: 2rem;
+    }
+
+    .preview-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1rem 0;
+    }
+
+    .preview-content th, .preview-content td {
+      border: 1px solid var(--border);
+      padding: 0.5rem;
+      text-align: left;
+    }
+
+    .preview-content th {
+      background: var(--bg-secondary);
+      font-weight: bold;
+    }
+
+    /* ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ ИЗОБРАЖЕНИЙ */
+    .preview-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: var(--radius);
+      margin: 0.5rem 0;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    /* Стили для изображений с подписями */
+    .preview-content .image-container {
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .preview-content .image-container img {
+      margin-bottom: 0.5rem;
+    }
+
+    .preview-content .image-caption {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .preview-content a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .preview-content a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: 1rem 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    /* Темная тема переключатель */
+    .theme-toggle {
+      position: relative;
+      width: 3rem;
+      height: 1.5rem;
+      background: var(--border);
+      border-radius: 0.75rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle::before {
+      content: '';
+      position: absolute;
+      width: 1.25rem;
+      height: 1.25rem;
+      background: white;
+      border-radius: 50%;
+      top: 0.125rem;
+      left: 0.125rem;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow);
+    }
+
+    body.dark .theme-toggle {
+      background: var(--primary);
+    }
+
+    body.dark .theme-toggle::before {
+      transform: translateX(1.5rem);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr !important;
+        height: auto;
+      }
+      
+      .toolbar {
+        padding: 1rem;
+        position: relative;
+        top: auto;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .header {
+        position: relative;
+      }
+    }
+
+    /* Анимации */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .editor-panel {
+      animation: slideIn 0.5s ease;
+    }
+
+    /* Tooltip */
+    [data-tooltip] {
+      position: relative;
+    }
+
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text-primary);
+      color: var(--bg-main);
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 1000;
+      margin-bottom: 0.5rem;
+      opacity: 0;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <h1>
+      <div class="header-icon">📝</div>
+      Markdown → BBCode Pro
+    </h1>
+  </header>
+
+  <div class="toolbar">
+    <div class="view-toggle">
+      <button onclick="setView('two')" class="active" id="btn-two">2 панели</button>
+      <button onclick="setView('three')" id="btn-three">3 панели</button>
+    </div>
+
+    <div class="cleanup-actions">
+      <button onclick="removeHrTags()" class="btn-warning" data-tooltip="Удалить все теги [hr]">
+        ❌ Remove [hr]
+      </button>
+      <button onclick="removeSizeTags()" class="btn-warning" data-tooltip="Удалить все теги [size]">
+        ❌ Remove [size]
+      </button>
+      <button onclick="cleanupBBCode()" class="btn-warning" data-tooltip="Очистить лишние символы и пустые строки">
+        🧹 Cleanup
+      </button>
+    </div>
+
+    <div class="actions">
+      <button onclick="copyBBCode()" class="btn-success" data-tooltip="Копировать BBCode">
+        📋 Copy BBCode
+      </button>
+      <button onclick="clearAll()" class="btn-danger" data-tooltip="Очистить все">
+        🧹 Clear
+      </button>
+      <button onclick="toggleTheme()" class="theme-toggle" data-tooltip="Переключить тему">
+      </button>
+    </div>
+  </div>
+
+  <div class="container two-panel" id="container">
+    <div class="editor-panel">
+      <div class="panel-header">
+        <div class="panel-icon">📝</div>
+        Markdown Input
+      </div>
+      <textarea id="markdown" placeholder="Введите Markdown здесь...&#10;&#10;Например:&#10;# Заголовок&#10;**Жирный текст**&#10;*Курсив*&#10;[Ссылка](https://example.com)&#10;![Изображение](https://example.com/image.jpg)&#10;&#10;> Цитата&#10;> > Вложенная цитата&#10;> > > Еще глубже&#10;&#10;```&#10;Блок кода&#10;```&#10;&#10;---&#10;&#10;- Список&#10;- Элементов"></textarea>
+    </div>
+
+    <div class="editor-panel">
+      <div class="panel-header">
+        <div class="panel-icon">🔧</div>
+        BBCode Output
+      </div>
+      <textarea id="bbcode" placeholder="BBCode будет сгенерирован автоматически..." readonly></textarea>
+    </div>
+
+    <div class="editor-panel" id="preview-panel" style="display: none;">
+      <div class="panel-header">
+        <div class="panel-icon">👁️</div>
+        Preview
+      </div>
+      <div class="preview-content" id="preview"></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Создано с ❤️ для удобной работы с BBCode • Полностью клиентское приложение
+  </footer>
+
+  <script>
+    const mdInput = document.getElementById('markdown');
+    const bbOutput = document.getElementById('bbcode');
+    const previewPanel = document.getElementById('preview-panel');
+    const previewContent = document.getElementById('preview');
+    const container = document.getElementById('container');
+
+    function convertMarkdownToBBCode(md) {
+      let output = md;
+
+      // Заголовки (исправлено для корректного отображения)
+      output = output.replace(/^###### (.*)$/gm, '[size=10][b]$1[/b][/size]');
+      output = output.replace(/^##### (.*)$/gm, '[size=12][b]$1[/b][/size]');
+      output = output.replace(/^#### (.*)$/gm, '[size=14][b]$1[/b][/size]');
+      output = output.replace(/^### (.*)$/gm, '[size=16][b]$1[/b][/size]');
+      output = output.replace(/^## (.*)$/gm, '[size=18][b]$1[/b][/size]');
+      output = output.replace(/^# (.*)$/gm, '[size=20][b]$1[/b][/size]');
+
+      // Выделения
+      output = output.replace(/\*\*\*(.+?)\*\*\*/g, '[b][i]$1[/i][/b]');
+      output = output.replace(/\*\*(.+?)\*\*/g, '[b]$1[/b]');
+      output = output.replace(/\*(.+?)\*/g, '[i]$1[/i]');
+      output = output.replace(/~~(.+?)~~/g, '[s]$1[/s]');
+      
+      // Код (блоки и инлайн)
+      output = output.replace(/```([\s\S]*?)```/g, (_, code) => `[code]${code.trim()}[/code]`);
+      output = output.replace(/`([^`\n]+)`/g, '[code]$1[/code]');
+
+      // Горизонтальные линии
+      output = output.replace(/^(-{3,}|\*{3,}|_{3,})$/gm, '[hr]');
+
+      // ИСПРАВЛЕНО: Вложенные цитаты
+      output = processNestedQuotes(output);
+
+      // Спойлеры
+      output = output.replace(/::: *spoiler *(.*?)\n([\s\S]*?):::/g, (_, title, content) =>
+        `[spoiler=${title.trim() || 'Спойлер'}]${content.trim()}[/spoiler]`
+      );
+
+      // HTML теги для цветов и выравниваний
+      output = output.replace(/<span style="color:\s*([^"]+)">(.*?)<\/span>/g, '[color=$1]$2[/color]');
+      output = output.replace(/<u>(.*?)<\/u>/g, '[u]$1[/u]');
+      output = output.replace(/<div align="center">(.*?)<\/div>/gs, '[center]$1[/center]');
+      output = output.replace(/<div align="right">(.*?)<\/div>/gs, '[right]$1[/right]');
+      output = output.replace(/<div align="left">(.*?)<\/div>/gs, '[left]$1[/left]');
+
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Изображения ДОЛЖНЫ обрабатываться ПЕРЕД ссылками!
+      output = output.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '[img]$2[/img]');
+
+      // Ссылки (обрабатываем ПОСЛЕ изображений!)
+      output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '[url=$2]$1[/url]');
+
+      // Видео (улучшено)
+      output = output.replace(/\[.*?\]\((https?:\/\/(?:www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})[^\s)]*)\)/g, '[youtube]$3[/youtube]');
+      output = output.replace(/\[.*?\]\((https?:\/\/vimeo\.com\/(\d+))\)/g, '[media]$1[/media]');
+
+      // Таблицы (улучшено)
+      output = output.replace(/^\|(.+)\|\r?\n\|[-:|: ]+\|\r?\n((?:\|.*\|\r?\n?)*)/gm, (match, header, body) => {
+        const headers = header.split('|').map(h => h.trim()).filter(h => h);
+        const rows = body.trim().split(/\r?\n/).map(row => 
+          row.split('|').map(c => c.trim()).filter(c => c !== '')
+        );
+        
+        let bbTable = '[table]\n';
+        bbTable += '[tr]' + headers.map(h => `[th]${h}[/th]`).join('') + '[/tr]\n';
+        rows.forEach(row => {
+          if (row.length > 0) {
+            bbTable += '[tr]' + row.map(c => `[td]${c}[/td]`).join('') + '[/tr]\n';
+          }
+        });
+        bbTable += '[/table]';
+        return bbTable;
+      });
+
+      // Списки (улучшено для вложенности)
+      // Нумерованные списки
+      output = output.replace(/((?:^[ \t]*\d+\.[ \t]+.*(?:\r?\n|$))+)/gm, (match) => {
+        const items = match.trim().split(/\r?\n/)
+          .map(line => line.replace(/^[ \t]*\d+\.[ \t]+/, '[*]'))
+          .join('\n');
+        return `[list=1]\n${items}\n[/list]\n`;
+      });
+
+      // Маркированные списки
+      output = output.replace(/((?:^[ \t]*[-+*][ \t]+.*(?:\r?\n|$))+)/gm, (match) => {
+        const items = match.trim().split(/\r?\n/)
+          .map(line => line.replace(/^[ \t]*[-+*][ \t]+/, '[*]'))
+          .join('\n');
+        return `[list]\n${items}\n[/list]\n`;
+      });
+
+      // Очистка от лишних символов > и пустых строк
+      output = cleanupBBCodeText(output);
+
+      return output.trim();
+    }
+
+    // НОВАЯ ФУНКЦИЯ: Обработка вложенных цитат
+    function processNestedQuotes(text) {
+      const lines = text.split('\n');
+      const result = [];
+      let quoteStack = [];
+      let currentQuoteLevel = 0;
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const quoteMatch = line.match(/^(> *)+/);
+        
+        if (quoteMatch) {
+          const newLevel = quoteMatch[0].split('>').length - 1;
+          const content = line.replace(/^(> *)+/, '').trim();
+          
+          // Закрываем теги если уровень уменьшился
+          while (currentQuoteLevel > newLevel) {
+            result.push('[/quote]');
+            quoteStack.pop();
+            currentQuoteLevel--;
+          }
+          
+          // Открываем новые теги если уровень увеличился
+          while (currentQuoteLevel < newLevel) {
+            result.push('[quote]');
+            quoteStack.push(currentQuoteLevel);
+            currentQuoteLevel++;
+          }
+          
+          if (content) {
+            result.push(content);
+          }
+        } else {
+          // Не цитата - закрываем все открытые цитаты
+          while (currentQuoteLevel > 0) {
+            result.push('[/quote]');
+            quoteStack.pop();
+            currentQuoteLevel--;
+          }
+          
+          if (line.trim() || result.length === 0 || result[result.length - 1] !== '') {
+            result.push(line);
+          }
+        }
+      }
+      
+      // Закрываем оставшиеся открытые цитаты
+      while (currentQuoteLevel > 0) {
+        result.push('[/quote]');
+        currentQuoteLevel--;
+      }
+      
+      return result.join('\n');
+    }
+
+    // УЛУЧШЕННАЯ ФУНКЦИЯ: Очистка BBCode от лишних символов и пустых строк
+    function cleanupBBCodeText(text) {
+      // Удаляем лишние символы >
+      text = text.replace(/^>\s*/gm, '');
+      text = text.replace(/>\s*$/gm, '');
+      
+      // Удаляем множественные пустые строки (более 2 подряд)
+      text = text.replace(/\n{3,}/g, '\n\n');
+      
+      // Удаляем пустые строки в начале и конце
+      text = text.trim();
+      
+      // Удаляем пустые строки между тегами
+      text = text.replace(/(\[\/[^\]]+\])\n+(\[[^\]]+\])/g, '$1\n$2');
+      
+      // Удаляем лишние пробелы в начале и конце строк
+      text = text.replace(/^[ \t]+|[ \t]+$/gm, '');
+      
+      // НОВОЕ: Удаляем пустые строки после закрывающих тегов размера и hr
+      text = text.replace(/(\[\/size\])\n+/g, '$1\n');
+      text = text.replace(/(\[hr\])\n+/g, '$1\n');
+      
+      return text;
+    }
+
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Конвертация BBCode в HTML с поддержкой изображений
+    function convertBBCodeToHTML(bbcode) {
+      let html = bbcode;
+
+      // Заголовки
+      html = html.replace(/\[size=(\d+)\]\[b\](.*?)\[\/b\]\[\/size\]/g, '<h$1>$2</h$1>');
+      
+      // Размеры (конвертируем в соответствующие заголовки)
+      html = html.replace(/\[size=20\]/g, '<h1>').replace(/\[\/size\]/g, '</h1>');
+      html = html.replace(/\[size=18\]/g, '<h2>').replace(/\[\/size\]/g, '</h2>');
+      html = html.replace(/\[size=16\]/g, '<h3>').replace(/\[\/size\]/g, '</h3>');
+      html = html.replace(/\[size=14\]/g, '<h4>').replace(/\[\/size\]/g, '</h4>');
+      html = html.replace(/\[size=12\]/g, '<h5>').replace(/\[\/size\]/g, '</h5>');
+      html = html.replace(/\[size=10\]/g, '<h6>').replace(/\[\/size\]/g, '</h6>');
+
+      // Основные теги
+      html = html.replace(/\[b\](.*?)\[\/b\]/g, '<strong>$1</strong>');
+      html = html.replace(/\[i\](.*?)\[\/i\]/g, '<em>$1</em>');
+      html = html.replace(/\[u\](.*?)\[\/u\]/g, '<u>$1</u>');
+      html = html.replace(/\[s\](.*?)\[\/s\]/g, '<s>$1</s>');
+
+      // Цвета
+      html = html.replace(/\[color=([^\]]+)\](.*?)\[\/color\]/g, '<span style="color: $1">$2</span>');
+
+      // Выравнивание
+      html = html.replace(/\[center\](.*?)\[\/center\]/gs, '<div class="center">$1</div>');
+      html = html.replace(/\[right\](.*?)\[\/right\]/gs, '<div class="right">$1</div>');
+      html = html.replace(/\[left\](.*?)\[\/left\]/gs, '<div class="left">$1</div>');
+
+      // Цитаты (поддержка вложенности)
+      html = html.replace(/\[quote\](.*?)\[\/quote\]/gs, '<div class="quote">$1</div>');
+
+      // Код
+      html = html.replace(/\[code\]([\s\S]*?)\[\/code\]/g, (match, code) => {
+        if (code.includes('\n')) {
+          return `<div class="code-block">${code}</div>`;
+        } else {
+          return `<span class="code">${code}</span>`;
+        }
+      });
+
+      // Спойлеры
+      html = html.replace(/\[spoiler=([^\]]*)\](.*?)\[\/spoiler\]/gs, 
+        '<div class="spoiler"><div class="spoiler-title" onclick="toggleSpoiler(this)">▶ $1</div><div class="spoiler-content">$2</div></div>'
+      );
+
+      // Ссылки
+      html = html.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/g, '<a href="$1" target="_blank">$2</a>');
+
+      // ИСПРАВЛЕНО: Изображения в простом формате [img]URL[/img]
+      html = html.replace(/\[img\](.*?)\[\/img\]/g, '<img src="$1" alt="Изображение">');
+
+      // Горизонтальные линии
+      html = html.replace(/\[hr\]/g, '<div class="hr"></div>');
+
+      // Списки
+      html = html.replace(/\[list=1\]\n([\s\S]*?)\n\[\/list\]/g, (match, content) => {
+        const items = content.replace(/\[\*\]/g, '<li>').split('\n').filter(item => item.trim());
+        return '<ol>' + items.join('</li>') + '</li></ol>';
+      });
+
+      html = html.replace(/\[list\]\n([\s\S]*?)\n\[\/list\]/g, (match, content) => {
+        const items = content.replace(/\[\*\]/g, '<li>').split('\n').filter(item => item.trim());
+        return '<ul>' + items.join('</li>') + '</li></ul>';
+      });
+
+      // Таблицы
+      html = html.replace(/\[table\]\n([\s\S]*?)\n\[\/table\]/g, (match, content) => {
+        let tableHTML = '<table>';
+        const rows = content.split(/\[\/tr\]\n?/).filter(row => row.trim());
+        
+        rows.forEach(row => {
+          if (row.includes('[tr]')) {
+            row = row.replace('[tr]', '');
+            tableHTML += '<tr>';
+            
+            // Заголовки
+            row = row.replace(/\[th\](.*?)\[\/th\]/g, '<th>$1</th>');
+            // Ячейки
+            row = row.replace(/\[td\](.*?)\[\/td\]/g, '<td>$1</td>');
+            
+            tableHTML += row + '</tr>';
+          }
+        });
+        
+        tableHTML += '</table>';
+        return tableHTML;
+      });
+
+      // YouTube
+      html = html.replace(/\[youtube\]([^\]]+)\[\/youtube\]/g, 
+        '<iframe width="560" height="315" src="https://www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe>'
+      );
+
+      // Переносы строк
+      html = html.replace(/\n/g, '<br>');
+
+      return html;
+    }
+
+    function updatePreview() {
+      const bbcode = bbOutput.value;
+      const html = convertBBCodeToHTML(bbcode);
+      previewContent.innerHTML = html;
+    }
+
+    function toggleSpoiler(element) {
+      const spoiler = element.parentElement;
+      spoiler.classList.toggle('open');
+      element.textContent = spoiler.classList.contains('open') ? '▼ ' + element.textContent.slice(2) : '▶ ' + element.textContent.slice(2);
+    }
+
+    function setView(view) {
+      document.querySelectorAll('.view-toggle button').forEach(btn => btn.classList.remove('active'));
+      
+      if (view === 'two') {
+        container.className = 'container two-panel';
+        previewPanel.style.display = 'none';
+        document.getElementById('btn-two').classList.add('active');
+      } else {
+        container.className = 'container three-panel';
+        previewPanel.style.display = 'flex';
+        document.getElementById('btn-three').classList.add('active');
+        updatePreview();
+      }
+    }
+
+    // УЛУЧШЕННАЯ ФУНКЦИЯ: Очистка BBCode от лишних символов и пустых строк
+    function cleanupBBCode() {
+      const currentBBCode = bbOutput.value;
+      const cleanedBBCode = cleanupBBCodeText(currentBBCode);
+      bbOutput.value = cleanedBBCode;
+      
+      updatePreview();
+      showNotification('BBCode очищен от лишних символов и пустых строк!', 'success');
+    }
+
+    // ИСПРАВЛЕННЫЕ ФУНКЦИИ для удаления тегов с правильной очисткой
+    function removeHrTags() {
+      let currentBBCode = bbOutput.value;
+      
+      // Удаляем теги [hr] и следующие за ними пустые строки
+      currentBBCode = currentBBCode.replace(/\[hr\]\n*/g, '');
+      
+      // Применяем общую очистку
+      currentBBCode = cleanupBBCodeText(currentBBCode);
+      bbOutput.value = currentBBCode;
+      
+      // Обновляем также исходный markdown
+      let currentMarkdown = mdInput.value;
+      currentMarkdown = currentMarkdown.replace(/^(-{3,}|\*{3,}|_{3,})$/gm, '');
+      currentMarkdown = cleanupBBCodeText(currentMarkdown);
+      mdInput.value = currentMarkdown;
+      
+      updatePreview();
+      showNotification('Все теги [hr] удалены и пустые строки очищены!', 'success');
+    }
+
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Правильное удаление тегов [size] без появления звездочек
+    function removeSizeTags() {
+      let currentBBCode = bbOutput.value;
+      
+      // Удаляем теги [size=X][b]...[/b][/size], оставляя только [b]...[/b]
+      currentBBCode = currentBBCode.replace(/\[size=\d+\]\[b\](.*?)\[\/b\]\[\/size\]/g, '[b]$1[/b]');
+      
+      // Удаляем остальные теги [size=X]...[/size], оставляя только содержимое
+      currentBBCode = currentBBCode.replace(/\[size=\d+\](.*?)\[\/size\]/g, '$1');
+      
+      // Применяем общую очистку
+      currentBBCode = cleanupBBCodeText(currentBBCode);
+      bbOutput.value = currentBBCode;
+      
+      // Обновляем также исходный markdown, удаляя символы заголовков
+      let currentMarkdown = mdInput.value;
+      currentMarkdown = currentMarkdown.replace(/^#{1,6}\s+/gm, '');
+      currentMarkdown = cleanupBBCodeText(currentMarkdown);
+      mdInput.value = currentMarkdown;
+      
+      updatePreview();
+      showNotification('Все теги [size] удалены и пустые строки очищены!', 'success');
+    }
+
+    // Функция для показа уведомлений
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: ${type === 'success' ? 'var(--accent)' : 'var(--primary)'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+        z-index: 1000;
+        animation: slideInRight 0.3s ease;
+        font-weight: 500;
+      `;
+      
+      // Добавляем стили анимации
+      if (!document.querySelector('#notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+          @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }, 3000);
+    }
+
+    mdInput.addEventListener('input', () => {
+      bbOutput.value = convertMarkdownToBBCode(mdInput.value);
+      if (previewPanel.style.display !== 'none') {
+        updatePreview();
+      }
+    });
+
+    function copyBBCode() {
+      bbOutput.select();
+      document.execCommand('copy');
+      showNotification('BBCode скопирован в буфер обмена!', 'success');
+    }
+
+    function clearAll() {
+      if (confirm('Вы уверены, что хотите очистить все поля?')) {
+        mdInput.value = '';
+        bbOutput.value = '';
+        previewContent.innerHTML = '';
+        showNotification('Все поля очищены!', 'info');
+      }
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      localStorage.setItem('darkTheme', isDark);
+      showNotification(isDark ? 'Темная тема включена' : 'Светлая тема включена', 'info');
+    }
+
+    // Загружаем сохраненную тему
+    document.addEventListener('DOMContentLoaded', () => {
+      const darkTheme = localStorage.getItem('darkTheme') === 'true';
+      if (darkTheme) {
+        document.body.classList.add('dark');
+      }
+    });
+
+    // Добавляем глобальную функцию для спойлеров
+    window.toggleSpoiler = toggleSpoiler;
+  </script>
+
+</body>
+</html>

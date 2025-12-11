@@ -1,0 +1,415 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Психологические Способности - Игра развития экстрасенсорных навыков</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/menu/menu.css">
+  <script src="/menu/menu.js" defer></script>
+</head>
+<body>
+    <!-- Фоновые частицы -->
+    <div id="particles-canvas"></div>
+    
+    <!-- Главное меню -->
+    <div id="main-menu" class="screen active">
+        <div class="container">
+            <header class="game-header">
+                <h1 class="game-title">
+                    <i class="fas fa-eye"></i>
+                    ПСИХОЛОГИЧЕСКИЕ СПОСОБНОСТИ
+                    <i class="fas fa-magic"></i>
+                </h1>
+                <p class="game-subtitle">Развивай свои экстрасенсорные навыки</p>
+            </header>
+            
+            <nav class="main-menu-nav">
+                <button class="menu-btn primary" id="start-game">
+                    <i class="fas fa-play"></i>
+                    Начать игру
+                </button>
+                <button class="menu-btn" id="view-progress">
+                    <i class="fas fa-chart-line"></i>
+                    Прогресс
+                </button>
+                <button class="menu-btn" id="achievements">
+                    <i class="fas fa-trophy"></i>
+                    Достижения
+                </button>
+                <button class="menu-btn" id="settings">
+                    <i class="fas fa-cog"></i>
+                    Настройки
+                </button>
+                <button class="menu-btn" id="about">
+                    <i class="fas fa-info-circle"></i>
+                    О игре
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Выбор уровня -->
+    <div id="level-select" class="screen">
+        <div class="container">
+            <header class="screen-header">
+                <h2>Выберите испытание</h2>
+                <button class="back-btn" data-target="main-menu">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </header>
+            
+            <div class="levels-grid">
+                <div class="level-card" data-game="telepathy">
+                    <div class="level-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>Телепатия</h3>
+                    <p>Угадывание карт и символов</p>
+                    <div class="level-difficulty">
+                        <span class="stars">★★☆☆☆</span>
+                    </div>
+                </div>
+                
+                <div class="level-card" data-game="clairvoyance">
+                    <div class="level-icon">
+                        <i class="fas fa-crystal-ball"></i>
+                    </div>
+                    <h3>Ясновидение</h3>
+                    <p>Предсказание цветов и чисел</p>
+                    <div class="level-difficulty">
+                        <span class="stars">★★★☆☆</span>
+                    </div>
+                </div>
+                
+                <div class="level-card" data-game="intuition">
+                    <div class="level-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3>Интуиция</h3>
+                    <p>Угадывание скрытых изображений</p>
+                    <div class="level-difficulty">
+                        <span class="stars">★★☆☆☆</span>
+                    </div>
+                </div>
+                
+                <div class="level-card" data-game="emotions">
+                    <div class="level-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3>Эмпатия</h3>
+                    <p>Определение эмоций людей</p>
+                    <div class="level-difficulty">
+                        <span class="stars">★★★☆☆</span>
+                    </div>
+                </div>
+                
+                <div class="level-card" data-game="precognition">
+                    <div class="level-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>Прекогниция</h3>
+                    <p>Предчувствие событий</p>
+                    <div class="level-difficulty">
+                        <span class="stars">★★★★☆</span>
+                    </div>
+                </div>
+                
+                <div class="level-card" data-game="extrasensory">
+                    <div class="level-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>Экстрасенсорика</h3>
+                    <p>Поиск скрытых объектов</p>
+                    <div class="level-difficulty">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                
+                <div class="level-card" data-game="energy">
+                    <div class="level-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <h3>Энергия</h3>
+                    <p>Практики с энергией</p>
+                    <div class="level-difficulty">
+                        <span class="stars">★★★☆☆</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Игровое поле -->
+    <div id="game-screen" class="screen">
+        <div class="container">
+            <header class="game-ui-header">
+                <button class="back-btn" data-target="level-select">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="game-info">
+                    <div class="game-title-small" id="current-game-title">Телепатия</div>
+                    <div class="game-stats">
+                        <span class="stat">
+                            <i class="fas fa-bullseye"></i>
+                            <span id="score">0</span>
+                        </span>
+                        <span class="stat">
+                            <i class="fas fa-clock"></i>
+                            <span id="timer">30</span>
+                        </span>
+                        <span class="stat">
+                            <i class="fas fa-heart"></i>
+                            <span id="lives">3</span>
+                        </span>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="game-area" id="game-area">
+                <!-- Динамически загружается игровой контент -->
+            </div>
+            
+            <div class="game-ui-footer">
+                <button class="ui-btn" id="hint-btn">
+                    <i class="fas fa-lightbulb"></i>
+                    Подсказка
+                </button>
+                <button class="ui-btn" id="pause-btn">
+                    <i class="fas fa-pause"></i>
+                    Пауза
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран прогресса -->
+    <div id="progress-screen" class="screen">
+        <div class="container">
+            <header class="screen-header">
+                <h2>Ваш прогресс</h2>
+                <button class="back-btn" data-target="main-menu">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </header>
+            
+            <div class="progress-content">
+                <div class="overall-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="total-games">0</span>
+                            <span class="stat-label">Игр сыграно</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="success-rate">0%</span>
+                            <span class="stat-label">Точность</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="best-score">0</span>
+                            <span class="stat-label">Лучший результат</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="progress-charts">
+                    <div class="chart-container">
+                        <h3>Прогресс по играм</h3>
+                        <canvas id="progress-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран достижений -->
+    <div id="achievements-screen" class="screen">
+        <div class="container">
+            <header class="screen-header">
+                <h2>Достижения</h2>
+                <button class="back-btn" data-target="main-menu">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </header>
+            
+            <div class="achievements-grid" id="achievements-list">
+                <!-- Динамически загружаются достижения -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран настроек -->
+    <div id="settings-screen" class="screen">
+        <div class="container">
+            <header class="screen-header">
+                <h2>Настройки</h2>
+                <button class="back-btn" data-target="main-menu">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </header>
+            
+            <div class="settings-content">
+                <div class="setting-group">
+                    <h3>Звук</h3>
+                    <div class="setting-item">
+                        <label for="master-volume">Общая громкость</label>
+                        <input type="range" id="master-volume" min="0" max="100" value="50">
+                        <span class="volume-value">50%</span>
+                    </div>
+                    <div class="setting-item">
+                        <label for="effects-volume">Звуковые эффекты</label>
+                        <input type="range" id="effects-volume" min="0" max="100" value="70">
+                        <span class="volume-value">70%</span>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>Игра</h3>
+                    <div class="setting-item">
+                        <label for="difficulty">Сложность</label>
+                        <select id="difficulty">
+                            <option value="easy">Легкая</option>
+                            <option value="medium" selected>Средняя</option>
+                            <option value="hard">Сложная</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="animations">Анимации</label>
+                        <input type="checkbox" id="animations" checked>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>Данные</h3>
+                    <button class="ui-btn danger" id="reset-progress">
+                        <i class="fas fa-trash"></i>
+                        Сбросить прогресс
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран "О игре" -->
+    <div id="about-screen" class="screen">
+        <div class="container">
+            <header class="screen-header">
+                <h2>О игре</h2>
+                <button class="back-btn" data-target="main-menu">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </header>
+            
+            <div class="about-content">
+                <div class="about-section">
+                    <h3>Психологические способности</h3>
+                    <p>Эта игра разработана для развития и тестирования экстрасенсорных способностей. Включает в себя различные упражнения для тренировки интуиции, телепатии, ясновидения и других паранормальных навыков.</p>
+                </div>
+                
+                <div class="about-section">
+                    <h3>Игровые режимы</h3>
+                    <ul>
+                        <li><strong>Телепатия</strong> - угадывание карт и символов</li>
+                        <li><strong>Ясновидение</strong> - предсказание цветов и чисел</li>
+                        <li><strong>Интуиция</strong> - определение скрытых изображений</li>
+                        <li><strong>Эмпатия</strong> - распознавание эмоций</li>
+                        <li><strong>Прекогниция</strong> - предчувствие событий</li>
+                        <li><strong>Экстрасенсорика</strong> - поиск скрытых объектов</li>
+                        <li><strong>Энергетические практики</strong> - работа с энергией</li>
+                    </ul>
+                </div>
+                
+                <div class="about-section">
+                    <h3>Советы</h3>
+                    <ul>
+                        <li>Расслабьтесь и доверьтесь первому впечатлению</li>
+                        <li>Не думайте логически, следуйте интуиции</li>
+                        <li>Регулярно тренируйтесь для улучшения результатов</li>
+                        <li>Не расстраивайтесь из-за неудач - это нормально</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content">
+            <h2>Игра завершена!</h2>
+            <div class="result-stats">
+                <div class="result-stat">
+                    <span class="result-label">Очки:</span>
+                    <span class="result-value" id="final-score">0</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-label">Точность:</span>
+                    <span class="result-value" id="final-accuracy">0%</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-label">Время:</span>
+                    <span class="result-value" id="final-time">0:00</span>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="ui-btn primary" id="play-again">Играть снова</button>
+                <button class="ui-btn" id="back-to-menu">В меню</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pause-modal" class="modal">
+        <div class="modal-content">
+            <h2>Пауза</h2>
+            <div class="modal-buttons">
+                <button class="ui-btn primary" id="resume-game">Продолжить</button>
+                <button class="ui-btn" id="restart-game">Заново</button>
+                <button class="ui-btn" id="quit-game">Выйти</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Звуковые элементы -->
+    <audio id="click-sound" preload="auto" volume="0.3">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJi..." type="audio/wav">
+    </audio>
+    
+    <audio id="success-sound" preload="auto" volume="0.5">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fd..." type="audio/wav">
+    </audio>
+    
+    <audio id="error-sound" preload="auto" volume="0.4">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fd..." type="audio/wav">
+    </audio>
+
+    <!-- Подключение скриптов -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/games/telepathy.js"></script>
+    <script src="js/games/clairvoyance.js"></script>
+    <script src="js/games/intuition.js"></script>
+    <script src="js/games/emotions.js"></script>
+    <script src="js/games/precognition.js"></script>
+    <script src="js/games/extrasensory.js"></script>
+    <script src="js/games/energy.js"></script>
+    <script src="js/progress.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/sound.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

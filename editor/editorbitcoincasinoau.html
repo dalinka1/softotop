@@ -1,0 +1,1209 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Редактор Bitcoincasino</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/menu/menu.css">
+  <script src="/menu/menu.js" defer></script>
+<style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .main-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      height: calc(100vh - 40px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .tabs-container {
+      background: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0 20px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tab {
+      padding: 12px 20px;
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      background: #e2e8f0;
+      color: #64748b;
+      font-weight: 500;
+      transition: all 0.2s;
+      user-select: none;
+      position: relative;
+    }
+
+    .tab:hover {
+      background: #cbd5e1;
+      color: #475569;
+    }
+
+    .tab.active {
+      background: white;
+      color: #4f46e5;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      border-radius: 2px 2px 0 0;
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor, .html-view, .html-pro-view, .phrases-view {
+      height: 100%;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: white;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+    }
+
+    .editor {
+      display: flex;
+    }
+
+    .editor[contenteditable="true"] {
+      padding: 20px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      outline: none;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100%;
+      border: none;
+      resize: none;
+      font-family: 'Monaco', 'Menlo', monospace;
+      background: #f9fafb;
+      outline: none;
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .replace-container {
+      display: grid;
+      gap: 12px;
+      height: 100%;
+      padding: 15px;
+      overflow-y: auto;
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .replace-section {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .replace-section h3 {
+      margin: 0 0 8px 0;
+      color: #1e293b;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .replace-textarea {
+      flex: 1;
+      min-height: 150px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      resize: none;
+      background: white;
+    }
+
+    .process-btn {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 8px;
+      font-weight: 500;
+      font-size: 12px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .process-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    }
+
+    .copy-btn {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      margin-top: 6px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      justify-content: center;
+    }
+
+    .copy-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+    }
+
+    .html-pro-btn {
+      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 8px;
+      font-weight: 500;
+      font-size: 12px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .html-pro-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Responsive design */
+    @media (max-width: 1024px) {
+      .replace-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .status-indicator {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .status-indicator.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="header">
+      <h1 class="text-2xl font-bold">
+        <i class="fas fa-code mr-3"></i>
+        Редактор Bitcoincasino
+      </h1>
+    </div>
+
+    <div class="tabs-container">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('editor')">
+          <i class="fas fa-edit mr-2"></i>Редактор
+        </div>
+        <div class="tab" onclick="switchTab('html')">
+          <i class="fas fa-code mr-2"></i>HTML
+        </div>
+        <div class="tab" onclick="switchTab('htmlpro')">
+          <i class="fas fa-code mr-2"></i>HTML PRO
+        </div>
+        <div class="tab" onclick="switchTab('phrases')">
+          <i class="fas fa-exchange-alt mr-2"></i>Замена списков
+        </div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div id="editor" class="editor" contenteditable="true" oninput="processImages()"></div>
+      
+      <div id="html" class="html-view">
+        <textarea readonly id="htmlOutput" placeholder="HTML код появится здесь..."></textarea>
+      </div>
+
+      <div id="htmlpro" class="html-pro-view">
+        <textarea id="htmlProOutput" placeholder="HTML PRO код с caption тегами появится здесь..."></textarea>
+      </div>
+      
+      <div id="phrases" class="phrases-view">
+        <div class="replace-container">
+          <div class="replace-section">
+            <h3><i class="fas fa-file-code mr-2"></i>1. Исходный HTML код (списки)</h3>
+            <textarea id="sourceHtml" class="replace-textarea" placeholder="Вставьте HTML код со списками или нажмите кнопку для автоматического извлечения из вкладки HTML..."></textarea>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button class="process-btn" onclick="processListReplacement()">
+                <i class="fas fa-magic"></i> Заменить текст
+              </button>
+              <button class="copy-btn" onclick="extractListsFromHTML()" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                <i class="fas fa-download"></i> Извлечь из HTML
+              </button>
+            </div>
+          </div>
+          
+          <div class="replace-section">
+            <h3><i class="fas fa-list mr-2"></i>2. Новые фразы (по строкам)</h3>
+            <textarea id="replacementPhrases" class="replace-textarea" placeholder="Введите новые фразы, каждую на отдельной строке:
+Cryptocurrency Gambling
+JokaRoom Overview
+Mobile App
+Expert Insights
+Bonus Analysis
+..."></textarea>
+            <button class="html-pro-btn" onclick="generateHtmlPro()">
+              <i class="fas fa-cogs"></i> Сформировать HTML PRO
+            </button>
+          </div>
+          
+          <div class="replace-section">
+            <h3><i class="fas fa-check-circle mr-2"></i>3. Результат</h3>
+            <textarea id="resultHtml" class="replace-textarea" readonly placeholder="Здесь появится результат замены..."></textarea>
+            <button class="copy-btn" onclick="copyResult()">
+              <i class="fas fa-copy"></i> Копировать результат
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-indicator" id="statusIndicator">
+    <i class="fas fa-check mr-2"></i>Успешно скопировано!
+  </div>
+ 
+  <script>
+    const editor = document.getElementById('editor');
+
+    function showStatus(message) {
+      const indicator = document.getElementById('statusIndicator');
+      indicator.innerHTML = `<i class="fas fa-check mr-2"></i>${message}`;
+      indicator.classList.add('show');
+      setTimeout(() => {
+        indicator.classList.remove('show');
+      }, 2000);
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.editor, .html-view, .html-pro-view, .phrases-view').forEach(v => v.style.display = 'none');
+
+      if (tab === 'editor') {
+        document.querySelector('.tab:nth-child(1)').classList.add('active');
+        document.getElementById('editor').style.display = 'flex';
+      } else if (tab === 'html') {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
+        document.getElementById('html').style.display = 'flex';
+        updateHTMLView();
+      } else if (tab === 'htmlpro') {
+        document.querySelector('.tab:nth-child(3)').classList.add('active');
+        document.getElementById('htmlpro').style.display = 'flex';
+      } else if (tab === 'phrases') {
+        document.querySelector('.tab:nth-child(4)').classList.add('active');
+        document.getElementById('phrases').style.display = 'flex';
+        setTimeout(autoExtractOnPhrasesTab, 100);
+      }
+    }
+
+    // Функция для обработки замены в списках
+    function processListReplacement() {
+      const sourceHtml = document.getElementById('sourceHtml').value.trim();
+      const phrasesText = document.getElementById('replacementPhrases').value.trim();
+      
+      if (!sourceHtml || !phrasesText) {
+        alert('Пожалуйста, заполните оба поля: исходный HTML и фразы для замены');
+        return;
+      }
+      
+      const phrases = phrasesText.split('\n').map(p => p.trim()).filter(p => p);
+      
+      // Создаем временный контейнер для парсинга HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = sourceHtml;
+      
+      // Находим все элементы li с ссылками
+      const listItems = tempDiv.querySelectorAll('li');
+      let phraseIndex = 0;
+      
+      listItems.forEach(li => {
+        const link = li.querySelector('a');
+        if (link && phraseIndex < phrases.length) {
+          // Заменяем текст ссылки на соответствующую фразу
+          link.textContent = phrases[phraseIndex];
+          phraseIndex++;
+        }
+      });
+      
+      // Получаем результат и форматируем его
+      let result = '';
+      listItems.forEach(li => {
+        // Убираем лишние пробелы и переносы, делаем компактный вид
+        const linkHtml = li.innerHTML.replace(/\s+/g, ' ').trim();
+        result += `<li>${linkHtml}</li>\n`;
+      });
+      
+      document.getElementById('resultHtml').value = result;
+    }
+
+   // Новая функция для генерации HTML PRO с применением всех правил
+function generateHtmlPro() {
+  const htmlCode = document.getElementById('htmlOutput').value.trim();
+  const resultHtml = document.getElementById('resultHtml').value.trim();
+  
+  if (!htmlCode) {
+    alert('Сначала сгенерируйте HTML код во вкладке HTML');
+    return;
+  }
+  
+  let modifiedHtml = htmlCode;
+  
+  // Если есть результат замены списков, выполняем замену
+  if (resultHtml) {
+    const sourceHtml = document.getElementById('sourceHtml').value.trim();
+    
+    if (sourceHtml) {
+      try {
+        const sourceContainer = document.createElement('div');
+        const resultContainer = document.createElement('div');
+        
+        sourceContainer.innerHTML = sourceHtml;
+        resultContainer.innerHTML = resultHtml;
+        
+        const sourceItems = Array.from(sourceContainer.querySelectorAll('li'));
+        const resultItems = Array.from(resultContainer.querySelectorAll('li'));
+        
+        let replacementsMade = 0;
+        
+        for (let i = 0; i < Math.min(sourceItems.length, resultItems.length); i++) {
+          const sourceItem = sourceItems[i];
+          const resultItem = resultItems[i];
+          
+          const sourceItemHtml = sourceItem.outerHTML.replace(/\s+/g, ' ').trim();
+          const resultItemHtml = resultItem.outerHTML.replace(/\s+/g, ' ').trim();
+          
+          const escapedSource = sourceItemHtml
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            .replace(/\s+/g, '\\s*');
+          
+          const sourceRegex = new RegExp(escapedSource, 'gi');
+          
+          if (sourceRegex.test(modifiedHtml)) {
+            modifiedHtml = modifiedHtml.replace(sourceRegex, resultItemHtml);
+            replacementsMade++;
+          }
+        }
+        
+        if (replacementsMade > 0) {
+          showStatus(`Выполнено замещений: ${replacementsMade} элементов списка!`);
+        }
+        
+      } catch (error) {
+        console.error('Ошибка при замене списков:', error);
+      }
+    }
+  }
+  
+  // ПРИМЕНЯЕМ ВСЕ ПРАВИЛА ТРАНСФОРМАЦИИ
+  
+  // Правило 1: Удаляем все теги <strong> и </strong>
+  modifiedHtml = modifiedHtml.replace(/<\/?strong>/gi, '');
+  
+  // Правило 2: Удаляем <div class="col-lg-8"> (старое правило)
+  modifiedHtml = modifiedHtml.replace(/<div class="col-lg-8">/gi, '');
+  
+  // Правило 3: После первых двух идущих подряд </div> вставляем contentblock1
+  // Ищем первое вхождение двух </div> подряд
+  const firstTwoDivsPattern = /(<\/div>\s*<\/div>)/;
+  const match = modifiedHtml.match(firstTwoDivsPattern);
+  
+  if (match) {
+    const insertPosition = match.index + match[0].length;
+    const beforeInsert = modifiedHtml.substring(0, insertPosition);
+    const afterInsert = modifiedHtml.substring(insertPosition);
+    
+    // Вставляем contentblock1 без закрывающего </div>
+    const contentBlock1 = '\n<div class="contentblock1">\n<div class="text-md-left">\n';
+    
+    // Проверяем, есть ли сразу после вставки закрывающий </div>, и удаляем его
+    const afterInsertCleaned = afterInsert.replace(/^\s*<\/div>/, '');
+    
+    modifiedHtml = beforeInsert + contentBlock1 + afterInsertCleaned;
+  }
+  
+  // Правило 4: После каждого </div>, следующего за <h2 id=, вставляем contentblock2, contentblock3 и т.д.
+  // Находим все <h2 id=
+  const h2Pattern = /<h2 id="([^"]+)">/g;
+  const h2Matches = [];
+  let h2Match;
+  
+  while ((h2Match = h2Pattern.exec(modifiedHtml)) !== null) {
+    h2Matches.push({
+      index: h2Match.index,
+      id: h2Match[1]
+    });
+  }
+  
+  // Для каждого <h2 id= находим следующий после него </div>
+  let blockCounter = 2; // Начинаем с contentblock2
+  let offset = 0; // Смещение из-за добавленных символов
+  
+  for (let i = 0; i < h2Matches.length; i++) {
+    const h2Position = h2Matches[i].index + offset;
+    
+    // Ищем первый </div> после этого h2
+    const searchFrom = h2Position;
+    const closingDivIndex = modifiedHtml.indexOf('</div>', searchFrom);
+    
+    if (closingDivIndex !== -1) {
+      const insertPosition = closingDivIndex + 6; // 6 = длина '</div>'
+      
+      // Определяем номер блока (циклически от 2 до 20)
+      const blockNum = ((blockCounter - 2) % 19) + 2;
+      const contentBlockN = `\n<div class="contentblock${blockNum}">\n<div class="text-md-left">\n`;
+      
+      // Вставляем блок
+      modifiedHtml = modifiedHtml.substring(0, insertPosition) + contentBlockN + modifiedHtml.substring(insertPosition);
+      
+      // Обновляем смещение
+      offset += contentBlockN.length;
+      
+      blockCounter++;
+    }
+  }
+  
+  // Правило 5: Перед каждым <div class="section-title text-center text-md-left"> ставим два </div>
+  modifiedHtml = modifiedHtml.replace(/(<div class="section-title text-center text-md-left">)/gi, '</div>\n</div>\n$1');
+  
+  // Правило 6: Обработка цитат в параграфах
+  // Создаем временный DOM элемент для парсинга HTML
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = modifiedHtml;
+  
+  // Находим все параграфы с классом "mb-3 mt-3"
+  const paragraphs = tempDiv.querySelectorAll('p.mb-3.mt-3');
+  
+  paragraphs.forEach(p => {
+    // Получаем innerHTML и удаляем вложенные теги для проверки (например, em внутри кавычек)
+    const tempTextDiv = document.createElement('div');
+    tempTextDiv.innerHTML = p.innerHTML;
+    // Удаляем вложенные теги для чистой проверки текста
+    const cleanText = p.innerHTML.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    // Улучшенная проверка на кавычки: ищем парные кавычки в начале и конце чистого текста
+    // Список всех возможных кавычек
+    const quoteChars = '"\'“”‘’«»„“‚‘‛‟';
+    const quoteRegexPattern = '^[' + quoteChars + ']\\s*(.*?)\\s*[' + quoteChars + ']$';
+    const quotesRegex = new RegExp(quoteRegexPattern, 's');
+    
+    if (quotesRegex.test(cleanText) && cleanText.length > 50) {  // Уменьшил порог для теста, оригинал был >150
+      // Заменяем класс параграфа
+      p.className = 'mb-3 mt-3 review-quote';
+      
+      // Находим предыдущий заголовок h3
+      let currentElement = p.previousElementSibling;
+      while (currentElement) {
+        if (currentElement.tagName === 'H3') {
+          currentElement.className = 'reviews-title';
+          break;
+        }
+        currentElement = currentElement.previousElementSibling;
+      }
+    }
+  });
+  
+  // Получаем модифицированный HTML обратно
+  modifiedHtml = tempDiv.innerHTML;
+  
+  // Вставляем результат в HTML PRO поле
+  document.getElementById('htmlProOutput').value = modifiedHtml;
+  
+  // Очищаем текст из окна редактора (правило 7)
+  document.getElementById('editor').innerHTML = '';
+  
+  showStatus('HTML PRO код сформирован успешно!');
+}
+    
+    // Функция для копирования результата
+    function copyResult() {
+      const resultField = document.getElementById('resultHtml');
+      resultField.select();
+      resultField.setSelectionRange(0, 99999);
+      
+      try {
+        document.execCommand('copy');
+        showStatus('Результат скопирован в буфер обмена!');
+      } catch (err) {
+        alert('Ошибка при копировании. Попробуйте выделить текст вручную.');
+      }
+    }
+
+    function processContent() {
+      let html = editor.innerHTML;
+
+      // Обработка изображений
+      html = html.replace(/\[img\](.*?)\[\/img\]/gi, '<img src="$1" alt="">');
+      html = html.replace(/&lt;img\s+src="(.*?)"\s*(alt="(.*?)")?\s*\/?&gt;/gi, '<img src="$1" alt="$3">');
+
+      // Обработка ссылок
+      html = html.replace(/\[url\](.*?)\[\/url\]/gi, '<a href="$1" target="_blank">$1</a>');
+      html = html.replace(/\[url=(.*?)\](.*?)\[\/url\]/gi, '<a href="$1" target="_blank">$2</a>');
+      html = html.replace(/(\s*)<a([^>]+)>\s*(.*?)\s*<\/a>(\s*)/gi, (_, before, attrs, text, after) => {
+        const cleanText = text.trim();
+        return ` ${`<a${attrs}>${cleanText}</a>`} `;
+      });
+
+      html = html.replace(/<a\s+href="([^"]+)"[^>]*>\s*([^<\s][^<]*?)\s*<\/a>/gi, '<a href="$1">$2</a>');
+
+      // Жирный, курсив, подчеркивание
+      html = html.replace(/\[b\](.*?)\[\/b\]/gi, '<strong>$1</strong>');
+      html = html.replace(/\[i\](.*?)\[\/i\]/gi, '<em>$1</em>');
+      html = html.replace(/\[u\](.*?)\[\/u\]/gi, '<u>$1</u>');
+      html = html.replace(/&lt;(b|strong)&gt;(.*?)&lt;\/(b|strong)&gt;/gi, '<strong>$2</strong>');
+      html = html.replace(/&lt;(i|em)&gt;(.*?)&lt;\/(i|em)&gt;/gi, '<em>$2</em>');
+      html = html.replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/gi, '<u>$1</u>');
+
+      // Заголовки h1-h6
+      html = html.replace(/&lt;h([1-6])&gt;(.*?)&lt;\/h\1&gt;/gi, '<h$1>$2</h$1>');
+
+      // Списки
+      html = html.replace(/\[list\](.*?)\[\/list\]/gsi, '<ul>$1</ul>');
+      html = html.replace(/\[list=1\](.*?)\[\/list\]/gsi, '<ol>$1</ol>');
+      html = html.replace(/\[\*\](.*?)(?=(\[\*]|\[\/list\]))/gsi, '<li>$1</li>');
+      html = html.replace(/&lt;li&gt;(.*?)&lt;\/li&gt;/gi, '<li>$1</li>');
+      html = html.replace(/&lt;ul&gt;(.*?)&lt;\/ul&gt;/gis, '<ul>$1</ul>');
+      html = html.replace(/&lt;ol&gt;(.*?)&lt;\/ol&gt;/gis, '<ol>$1</ol>');
+
+      // Таблицы
+      html = html.replace(/\[table\](.*?)\[\/table\]/gis, '<table>$1</table>');
+      html = html.replace(/\[tr\](.*?)\[\/tr\]/gis, '<tr>$1</tr>');
+      html = html.replace(/\[td\](.*?)\[\/td\]/gis, '<td>$1</td>');
+      html = html.replace(/\[th\](.*?)\[\/th\]/gis, '<th>$1</th>');
+      html = html.replace(/&lt;table&gt;(.*?)&lt;\/table&gt;/gis, '<table>$1</table>');
+      html = html.replace(/&lt;tr&gt;(.*?)&lt;\/tr&gt;/gis, '<tr>$1</tr>');
+      html = html.replace(/&lt;td&gt;(.*?)&lt;\/td&gt;/gis, '<td>$1</td>');
+      html = html.replace(/&lt;th&gt;(.*?)&lt;\/th&gt;/gis, '<th>$1</th>');
+
+      // Код и цитаты
+      html = html.replace(/\[code\](.*?)\[\/code\]/gis, '<pre><code>$1</code></pre>');
+      html = html.replace(/\[quote\](.*?)\[\/quote\]/gis, '<blockquote>$1</blockquote>');
+      html = html.replace(/&lt;pre&gt;(.*?)&lt;\/pre&gt;/gis, '<pre>$1</pre>');
+      html = html.replace(/(<a[^>]*>)\s+(.*?<\/a>)/gi, (_, openingTag, rest) => {
+        return openingTag + rest.replace(/^(\s+)/, '');
+      });
+
+      // Очистка лишних пробелов/переносов
+      html = html.replace(/\n{3,}/g, '\n\n');
+
+      // Markdown: Заголовки # H1, ## H2, ...
+      html = html.replace(/^###### (.*)$/gm, '<h6>$1</h6>');
+      html = html.replace(/^##### (.*)$/gm, '<h5>$1</h5>');
+      html = html.replace(/^#### (.*)$/gm, '<h4>$1</h4>');
+      html = html.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+
+      // Markdown: **bold**, *italic*, `code`
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      // Markdown: списки - и *
+      html = html.replace(/^\s*[-*]\s+(.*)$/gm, '<ul><li>$1</li></ul>');
+      html = html.replace(/<\/ul>\s*<ul>/g, '');
+      html = html.replace(/^> (.*)$/gm, '<blockquote>$1</blockquote>');
+
+      // Markdown: ссылки [text](url)
+      html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+      editor.innerHTML = html;
+    }
+
+    editor.addEventListener("paste", () => {
+      setTimeout(() => {
+        processContent();
+      }, 10);
+    });
+
+    function fixSpaceAfterLinks() {
+      const links = editor.querySelectorAll('a');
+
+      links.forEach(link => {
+        let next = link.nextSibling;
+
+        if (!next) return;
+
+        if (next.nodeType === Node.TEXT_NODE) {
+          if (/^[.,\-–—]/.test(next.textContent)) {
+            next.textContent = ' ' + next.textContent;
+          }
+        } else if (next.nodeType === Node.ELEMENT_NODE) {
+          if (next.firstChild && next.firstChild.nodeType === Node.TEXT_NODE) {
+            if (/^[.,\-–—]/.test(next.firstChild.textContent)) {
+              next.firstChild.textContent = ' ' + next.textContent;
+            }
+          }
+        }
+      });
+    }
+
+    editor.addEventListener('input', fixSpaceAfterLinks);
+    editor.addEventListener('paste', () => {
+      setTimeout(fixSpaceAfterLinks, 10);
+    });
+
+    // HTML View
+    function updateHTMLView() {
+      const editor = document.getElementById('editor');
+      const raw = editor.innerHTML;
+
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = raw;
+
+      const tables = wrapper.querySelectorAll('table');
+      tables.forEach(table => {
+        const rows = table.querySelectorAll('tr');
+        if (rows.length > 0) {
+          const firstRow = rows[0];
+          const parent = firstRow.parentNode;
+
+          const newHeaderRow = firstRow.cloneNode(true);
+          newHeaderRow.querySelectorAll('td').forEach(td => {
+            const th = document.createElement('th');
+            th.innerHTML = td.innerHTML;
+            td.replaceWith(th);
+          });
+
+          const thead = document.createElement('thead');
+          thead.appendChild(newHeaderRow);
+          parent.removeChild(firstRow);
+
+          const tbody = table.querySelector('tbody');
+          if (tbody) {
+            table.insertBefore(thead, tbody);
+          } else {
+            table.insertBefore(thead, table.firstChild);
+          }
+        }
+      });
+
+      const tableCells = wrapper.querySelectorAll('td, th');
+      tableCells.forEach(cell => {
+        const listItems = cell.querySelectorAll('li');
+        listItems.forEach(li => {
+          const text = li.textContent;
+          const textNode = document.createTextNode(text);
+          li.replaceWith(textNode);
+        });
+      });
+
+      tableCells.forEach(cell => {
+        const uls = cell.querySelectorAll('ul, ol');
+        uls.forEach(ul => {
+          const onlyText = Array.from(ul.childNodes).every(node => 
+            node.nodeType === Node.TEXT_NODE || node.nodeType === Node.COMMENT_NODE
+          );
+          if (onlyText) {
+            const text = ul.textContent;
+            const textNode = document.createTextNode(text);
+            ul.replaceWith(textNode);
+          }
+        });
+      });
+
+      const containerTags = ['table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th', 'ul', 'ol', 'li'];
+      containerTags.forEach(tag => {
+        const elements = wrapper.querySelectorAll(tag + ' p');
+        elements.forEach(p => {
+          const parent = p.parentNode;
+          while (p.firstChild) {
+            parent.insertBefore(p.firstChild, p);
+          }
+          parent.removeChild(p);
+        });
+      });
+
+      const remainingP = wrapper.querySelectorAll('p');
+      remainingP.forEach(p => {
+        if (!p.textContent.trim()) {
+          p.remove();
+        } else {
+          p.classList.add('mb-3', 'mt-3');
+        }
+      });
+
+      let cleaned = cleanHTML(wrapper.innerHTML);
+      let formatted = formatHTML(cleaned);
+
+      formatted = formatted.replace(/<\/div>\s*<*<br\s*\/?>\s*<\/div>\s*<\/div>\s*$/, '');
+      formatted = formatted.replace(/(<\/strong>)\s*:/g, '$1:');
+      formatted = formatted.replace(/(\S)\s+(<\/strong>)/g, '$1$2');
+
+      document.getElementById('htmlOutput').value = formatted;
+    }
+
+    function cleanHTML(html) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      const whitelist = {
+        A: ['href'],
+        IMG: ['src', 'alt'],
+        STRONG: [], EM: [], B: [], I: [], U: [],
+        UL: [], OL: [], LI: [],
+        H1: [], H2: [], H3: [], H4: [], H5: [], H6: [],
+        P: [], BR: [],
+        TABLE: [], THEAD: [], TBODY: [], TR: [], TD: [], TH: []
+      };
+
+      function replaceTextStyle(el) {
+        const style = el.getAttribute("style");
+        if (!style) return;
+
+        const isBold = /font-weight\s*:\s*(bold|700)/i.test(style);
+        const isItalic = /font-style\s*:\s*italic/i.test(style);
+
+        if (isBold && el.textContent.trim()) {
+          const strong = document.createElement("strong");
+          strong.innerHTML = el.innerHTML;
+          el.replaceWith(strong);
+        } else if (isItalic && el.textContent.trim()) {
+          const em = document.createElement("em");
+          em.innerHTML = el.innerHTML;
+          el.replaceWith(em);
+        }
+      }
+
+      function cleanNode(node) {
+        const children = Array.from(node.children);
+
+        for (const el of children) {
+          replaceTextStyle(el);
+
+          if (!el.parentElement) continue;
+
+          if (!whitelist[el.tagName]) {
+            cleanNode(el);
+            el.replaceWith(...el.childNodes);
+          } else {
+            Array.from(el.attributes).forEach(attr => {
+              if (!whitelist[el.tagName].includes(attr.name)) {
+                el.removeAttribute(attr.name);
+              }
+            });
+
+            if (el.tagName === 'P') {
+              el.classList.add('mb-3', 'mt-3');
+            }
+
+            if (el.tagName === 'TABLE') {
+              el.classList.add('w-100');
+              const parent = el.parentElement;
+              if (!parent.classList.contains('feature-table')) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'feature-table';
+                parent.insertBefore(wrapper, el);
+                wrapper.appendChild(el);
+              }
+            }
+
+            if (el.tagName === 'UL' || el.tagName === 'OL') {
+              el.classList.add(el.tagName === 'UL' ? 'list-unstyled' : 'cute-list');
+              const parent = el.parentElement;
+              if (!parent.classList.contains('voip-feature')) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'voip-feature';
+                parent.insertBefore(wrapper, el);
+                wrapper.appendChild(el);
+              }
+            }
+
+            cleanNode(el);
+          }
+        }
+      }
+
+      function wrapHeadingsAndBuildTOC(doc) {
+        const h2s = Array.from(doc.querySelectorAll('h2'));
+        const tocList = [];
+
+        let count = 1;
+        for (const h2 of h2s) {
+          const id = count.toString();
+          const text = h2.textContent.trim();
+
+          h2.id = id;
+          tocList.push({ id, text });
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'section-title text-center text-md-left';
+          h2.replaceWith(wrapper);
+          wrapper.appendChild(h2);
+
+          count++;
+        }
+
+        if (tocList.length === 0) return;
+
+        const tocHTML = `
+          <div class="row">
+            <div class="col-lg-4">
+              <div class="widget widget_categories">
+                <div class="widget-title">
+                  <p>In this article:</p>
+                </div>
+                <ul>
+                  ${tocList.map(item => `
+                    <li><a href="[[~[[*id]]]]#${item.id}">${item.text}</a></li>
+                  `).join('')}
+                </ul>
+              </div>
+            </div>
+            <div class="col-lg-8">
+        `.trim();
+
+        const tocFragment = document.createElement('template');
+        tocFragment.innerHTML = tocHTML;
+        doc.body.insertBefore(tocFragment.content, doc.body.firstChild);
+      }
+
+      cleanNode(doc.body);
+      applyFAQMode(doc);
+      wrapHeadingsAndBuildTOC(doc);
+
+      let cleanedHTML = Array.from(doc.body.childNodes).map(node =>
+        node.outerHTML || node.textContent
+      ).join('');
+
+      cleanedHTML = cleanedHTML.replace(
+        /(<div class="col-lg-8">)(\s*<\/div>){1,3}/,
+        '$1'
+      );
+
+      return cleanedHTML + '</div>';
+    }
+
+    function applyFAQMode(doc) {
+      const h4s = doc.querySelectorAll('h4');
+      h4s.forEach(h4 => {
+        if (h4.textContent.trim().toLowerCase() === 'faqmode') {
+          const faqWrapper = document.createElement('div');
+          faqWrapper.className = 'faq-wrap';
+
+          const accordion = document.createElement('div');
+          accordion.className = 'accordion';
+          accordion.id = 'accordionFaq-1';
+          faqWrapper.appendChild(accordion);
+
+          h4.insertAdjacentElement('afterend', faqWrapper);
+
+          let current = faqWrapper.nextElementSibling;
+          let index = 1;
+          let stop = false;
+
+          while (current && !stop) {
+            if (current.tagName === 'H3') {
+              const questionText = current.innerHTML;
+
+              let answerEl = current.nextElementSibling;
+              while (answerEl && answerEl.tagName !== 'P') {
+                answerEl = answerEl.nextElementSibling;
+              }
+
+              const item = document.createElement('div');
+              item.className = 'single-faq';
+
+              const collapseClass = index === 1 ? 'collapse show' : 'collapse';
+
+              item.innerHTML = `
+                <div class="faq-question" data-toggle="collapse" data-target="#accordionFaq-1-item-${index}" role="button"
+                  aria-expanded="true" aria-controls="accordionFaq-1-item-${index}">
+                  <h3>${questionText}</h3>
+                </div>
+                <div id="accordionFaq-1-item-${index}" class="${collapseClass}" data-parent="#accordionFaq-1">
+                  <div class="faq-answer">
+                  </div>
+                </div>
+              `;
+
+              if (answerEl && answerEl.tagName === 'P') {
+                const faqAnswer = item.querySelector('.faq-answer');
+                faqAnswer.appendChild(answerEl.cloneNode(true));
+                answerEl.remove();
+              }
+
+              current.remove();
+              accordion.appendChild(item);
+              index++;
+
+              current = faqWrapper.nextElementSibling;
+            } else if (current.tagName === 'H2' || current.tagName === 'H4') {
+              stop = true;
+            } else {
+              current = current.nextElementSibling;
+            }
+          }
+        }
+      });
+    }
+
+    function formatHTML(html) {
+      const tab = '  ';
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+      const div = doc.body.firstChild;
+
+      function formatNode(node, indent = 0) {
+        let result = '';
+        const pad = tab.repeat(indent);
+
+        if (node.nodeType === Node.TEXT_NODE) {
+          const trimmed = node.textContent.trim();
+          if (trimmed) result += pad + trimmed + '\n';
+          return result;
+        }
+
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const tag = node.tagName.toLowerCase();
+          let attrs = '';
+          for (let attr of node.attributes) {
+            attrs += ` ${attr.name}="${attr.value}"`;
+          }
+
+          const isSelfClosing = ['br', 'img', 'hr'].includes(tag);
+          if (isSelfClosing) {
+            result += pad + `<${tag}${attrs} />\n`;
+          } else if (tag === 'a') {
+            const inner = node.textContent.trim();
+            result += pad + `<a${attrs}>${inner}</a>\n`;
+          } else {
+            result += pad + `<${tag}${attrs}>\n`;
+            for (let child of node.childNodes) {
+              result += formatNode(child, indent + 1);
+            }
+            result += pad + `</${tag}>\n`;
+          }
+        }
+
+        return result;
+      }
+
+      let formatted = '';
+      for (let child of div.childNodes) {
+        formatted += formatNode(child);
+      }
+
+      return formatted.trim();
+    }
+
+    // Функция для автоматического извлечения списков из HTML и вставки в поле замены
+    function extractListsFromHTML() {
+      const htmlCode = document.getElementById('htmlOutput').value.trim();
+      
+      if (!htmlCode) {
+        return;
+      }
+      
+      try {
+        const startMarker = '<div class="widget-title">';
+        const endMarker = '</ul>';
+        
+        const startIndex = htmlCode.indexOf(startMarker);
+        if (startIndex === -1) return;
+        
+        const ulStartIndex = htmlCode.indexOf('<ul>', startIndex);
+        if (ulStartIndex === -1) return;
+        
+        const ulEndIndex = htmlCode.indexOf(endMarker, ulStartIndex);
+        if (ulEndIndex === -1) return;
+        
+        const ulStart = htmlCode.indexOf('<ul>', startIndex);
+        const ulContent = htmlCode.substring(ulStart + 4, ulEndIndex).trim();
+        
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = ulContent;
+        
+        const listItems = tempDiv.querySelectorAll('li');
+        
+        if (listItems.length === 0) return;
+        
+        let extractedList = '';
+        
+        listItems.forEach((li, index) => {
+          const liHtml = li.outerHTML
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          extractedList += liHtml;
+          
+          if (index < listItems.length - 1) {
+            extractedList += '\n';
+          }
+        });
+        
+        document.getElementById('sourceHtml').value = extractedList;
+        
+        showStatus(`Извлечено ${listItems.length} элементов списка из HTML!`);
+        
+      } catch (error) {
+        console.error('Ошибка при извлечении списков:', error);
+      }
+    }
+
+    // Функция для автоматического извлечения при переключении на вкладку "Замена списков"
+    function autoExtractOnPhrasesTab() {
+      const sourceField = document.getElementById('sourceHtml');
+      if (!sourceField.value.trim()) {
+        extractListsFromHTML();
+      }
+    }
+
+    // Обработка горячих клавиш
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+          case 'b':
+            e.preventDefault();
+            break;
+          case 'i':
+            e.preventDefault();
+            break;
+          case 'u':
+            e.preventDefault();
+            break;
+          case 'z':
+            e.preventDefault();
+            break;
+          case 'y':
+            e.preventDefault();
+            break;
+        }
+      }
+    });
+
+    // Функция для обработки изображений и автообновления HTML
+    function processImages() {
+      setTimeout(() => {
+        if (document.querySelector('.tab:nth-child(2)').classList.contains('active')) {
+          updateHTMLView();
+        }
+      }, 100);
+    }
+    
+    // Автоматическое обновление HTML при изменении редактора
+    editor.addEventListener('input', () => {
+      clearTimeout(window.htmlUpdateTimeout);
+      window.htmlUpdateTimeout = setTimeout(() => {
+        if (document.querySelector('.tab:nth-child(2)').classList.contains('active')) {
+          updateHTMLView();
+        }
+      }, 500);
+    });
+
+    editor.addEventListener('blur', () => {
+      setTimeout(() => {
+        updateHTMLView();
+      }, 100);
+    });
+    
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', function() {
+      editor.focus();
+      
+      setTimeout(() => {
+        updateHTMLView();
+      }, 500);
+    });
+
+  </script>
+
+</body>
+</html>

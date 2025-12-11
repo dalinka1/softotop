@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Softo.top — Software & Tools Hub</title>
+  <meta name="description" content="Softo.top — современная платформа с инструментами для редактирования и творчества. Попробуйте визуальные редакторы, Markdown и BBCode.">
+  <link rel="stylesheet" href="/menu/menu.css">
+  <script src="/menu/menu.js" defer></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #f2e6ff, #ffffff);
+      color: #2c2c2c;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin: 0;
+      color: #6a4fff;
+    }
+
+    header p {
+      font-size: 1.1rem;
+      color: #555;
+      margin-top: 10px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      width: 100%;
+      max-width: 1200px;
+      justify-items: center;
+    }
+
+    .card {
+      background: #fff;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 420px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+    }
+
+    .card h2 {
+      color: #4a3cff;
+      margin-bottom: 12px;
+      font-size: 1.6rem;
+    }
+
+    .card p {
+      color: #555;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .card a {
+      display: inline-block;
+      padding: 12px 26px;
+      background: linear-gradient(90deg, #6a4fff, #8f6fff);
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.3s ease;
+    }
+
+    .card a:hover {
+      background: linear-gradient(90deg, #8f6fff, #6a4fff);
+    }
+
+    footer {
+      margin-top: 60px;
+      font-size: 0.9rem;
+      color: #777;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Softo.top</h1>
+    <p>Современные инструменты и редакторы для работы с контентом</p>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <h2>WYSIWYG & BB Code Editor</h2>
+      <p>Попробуйте визуальный редактор с поддержкой BBCode и функцией автоматической конверсии в современный WYSIWYG.</p>
+      <a href="/editor/wysiwyg-bbcode.html">Открыть редактор</a>
+    </div>
+
+    <div class="card">
+      <h2>Редактор Markdown в BBCode</h2>
+      <p>Конвертируйте Markdown в BBCode быстро и точно. Удобно для форумов, блогов и контент-платформ.</p>
+      <a href="/editor/editor-markdown-bb.html">Перейти</a>
+    </div>
+
+    <div class="card">
+      <h2>Визуальный редактор в Html, Markdown и BBCode</h2>
+      <p>Многоформатный редактор, объединяющий три режима редактирования — HTML, Markdown и BBCode. Идеален для разработчиков и контент-мейкеров.</p>
+      <a href="/editor/editor-html-markdown-bbcode.html">Перейти</a>
+    </div>
+
+    <div class="card">
+      <h2>Редактор HTML, Markdown в Визуал (WYSIWYG)</h2>
+      <p>Преобразуйте код в визуальный контент. Удобный инструмент для моментального просмотра HTML и Markdown в живом режиме WYSIWYG.</p>
+      <a href="/editor/editor-html-markdown-wysiwyg.html">Перейти</a>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 Softo.top — Все права защищены.
+  </footer>
+</body>
+</html>
